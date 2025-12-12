@@ -132,7 +132,7 @@ export default function LifLab() {
                                 <h2 className="text-xs text-zinc-400 uppercase tracking-widest mb-4 text-center font-semibold">Governing Equation</h2>
                                 <div className="flex flex-wrap justify-center items-center text-xl font-bold font-mono">
                                     <span className="text-zinc-400 mr-2">τ·</span>
-                                    <span className="text-zinc-300">V'</span>
+                                    <span className="text-zinc-300">V&apos;</span>
                                     <span className="mx-3 text-zinc-600">=</span>
                                     <span className="text-zinc-400 mr-1">-</span>
                                     <span className="text-zinc-300">(V-</span>
