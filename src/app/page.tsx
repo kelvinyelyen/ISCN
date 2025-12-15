@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Activity } from "lucide-react";
+import { ArrowRight, Activity, Zap, Grid } from "lucide-react";
 
 export default function Home() {
   return (
@@ -17,6 +17,7 @@ export default function Home() {
       </div>
 
       <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left gap-4">
+        {/* LIF Model */}
         <Link
           href="/labs/lif"
           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-emerald-500/30 hover:bg-zinc-900/50 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
@@ -27,6 +28,40 @@ export default function Home() {
           </h2>
           <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
             Leaky Integrate-and-Fire single neuron simulation with real-time oscilloscope.
+          </p>
+          <div className="mt-4 flex items-center text-emerald-400 opacity-0 transition-opacity group-hover:opacity-100 text-xs">
+            Enter Lab <ArrowRight className="ml-2 h-3 w-3" />
+          </div>
+        </Link>
+
+        {/* Module 1: Linear Algebra */}
+        <Link
+          href="/labs/linear-algebra"
+          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-emerald-500/30 hover:bg-zinc-900/50 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
+        >
+          <h2 className={`mb-3 text-2xl font-semibold flex items-center gap-2`}>
+            Linear A.
+            <Grid className="h-4 w-4 text-emerald-400" />
+          </h2>
+          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
+            Interactive Matrix Transformations, Eigenvectors, and Dynamical Systems.
+          </p>
+          <div className="mt-4 flex items-center text-emerald-400 opacity-0 transition-opacity group-hover:opacity-100 text-xs">
+            Enter Lab <ArrowRight className="ml-2 h-3 w-3" />
+          </div>
+        </Link>
+
+        {/* Module 2: Phase Plane */}
+        <Link
+          href="/labs/diff-eqn"
+          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-emerald-500/30 hover:bg-zinc-900/50 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
+        >
+          <h2 className={`mb-3 text-2xl font-semibold flex items-center gap-2`}>
+            Phase Plane
+            <Zap className="h-4 w-4 text-emerald-400" />
+          </h2>
+          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
+            Geometric analysis of excitable systems (FitzHugh-Nagumo).
           </p>
           <div className="mt-4 flex items-center text-emerald-400 opacity-0 transition-opacity group-hover:opacity-100 text-xs">
             Enter Lab <ArrowRight className="ml-2 h-3 w-3" />

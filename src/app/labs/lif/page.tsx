@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSimulationStore } from '@/store/simulation';
 import { ForceBalance } from '@/components/viz/ForceBalance';
 import { ConceptDialog } from '@/components/guide/ConceptDialog';
+import { lifContent } from './content';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import {
@@ -109,7 +110,6 @@ export default function LifLab() {
 
             {/* DESKTOP CONTENT */}
             <div className="hidden md:flex flex-col h-full">
-
                 {/* Compact Header */}
                 <header className="h-12 border-b border-zinc-900 flex items-center justify-between px-4 bg-zinc-950/80 backdrop-blur-sm z-10 shrink-0">
                     <div className="flex items-center gap-3">
@@ -118,7 +118,7 @@ export default function LifLab() {
                             <Link href="/" className="hover:text-emerald-400 transition-colors">ISCN</Link> <span className="text-zinc-400 font-normal text-base">| L.I.F. Model</span>
                         </h1>
                     </div>
-                    <ConceptDialog />
+                    <ConceptDialog {...lifContent} />
                 </header>
 
                 <main className="flex-1 grid grid-cols-12 gap-0 overflow-hidden h-full">
