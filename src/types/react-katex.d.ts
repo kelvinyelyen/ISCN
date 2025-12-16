@@ -7,9 +7,9 @@ declare module 'react-katex' {
         block?: boolean;
         errorColor?: string;
         renderError?: (error: Error | TypeError) => React.ReactNode;
-        settings?: any;
-        as?: any;
-        [key: string]: any;
+        settings?: object;
+        as?: React.ElementType;
+        [key: string]: unknown;
     }
 
     export class InlineMath extends React.Component<MathProps> { }

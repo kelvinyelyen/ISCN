@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from 'next/link';
 import { Slider } from "@/components/ui/slider";
 import { Activity } from "lucide-react";
-import { Button } from '@/components/ui/button';
 import {
     Select,
     SelectContent,
@@ -92,32 +91,46 @@ export default function LinearAlgebraPage() {
                 </header>
 
                 <main className="flex-1 grid grid-cols-12 gap-0 overflow-hidden h-full">
-                    {/* LEFT COLUMN: Controls */}
-                    <div className="col-span-4 lg:col-span-3 flex flex-col border-r border-zinc-900 bg-zinc-925 relative">
-                        <div className="absolute inset-0 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-hide p-6 space-y-6">
 
-                            {/* Controls */}
-                            <div className="space-y-6">
-                                <div className="bg-zinc-900/40 border border-zinc-800 rounded p-4 text-center">
-                                    <h3 className="text-xs text-zinc-500 uppercase tracking-widest mb-4 font-semibold">
-                                        {mode === 'neuro' ? "Somatic Current" : "Dot Product"}
-                                    </h3>
-                                    <BlockMath>{mode === 'neuro' ? "I_{sum} = \\sum w_i \\cdot x_i" : "y = \\sum w_i \\cdot x_i"}</BlockMath>
-                                    <div className="mt-4 text-3xl font-bold font-mono">
-                                        <span className={cn(dotProduct < 0 ? "text-rose-400" : "text-emerald-400")}>
+                    {/* LEFT SIDEBAR: Controls & Stats */}
+                    <div className="col-span-3 flex flex-col border-r border-zinc-900 bg-zinc-925 relative z-20">
+                        <div className="absolute inset-0 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-hide p-6 space-y-8">
+
+                            {/* 1. Formula Display & Output */}
+                            <div className="space-y-4">
+                                <div className="p-4 bg-zinc-900/50 rounded-lg border border-zinc-800 text-center space-y-4">
+                                    {/* Full Formula */}
+                                    <div className="py-2">
+                                        <BlockMath>{mode === 'neuro' ? "I_{sum} = \\sum_{i} w_i x_i" : "y = \\vec{w} \\cdot \\vec{x}"}</BlockMath>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-zinc-800">
+                                        <h3 className="text-xs text-zinc-500 uppercase tracking-widest mb-1 font-semibold">
+                                            {mode === 'neuro' ? "Somatic Current" : "Dot Product"}
+                                        </h3>
+                                        <div className={cn("text-3xl font-bold font-mono", dotProduct < 0 ? "text-rose-400" : "text-emerald-400")}>
                                             {dotProduct.toFixed(2)}
-                                        </span>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div className="space-y-4">
+                            {/* 2. Sliders (Controls) */}
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
+                                    <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                                        {mode === 'neuro' ? "Synaptic Weights" : "Vector Components"}
+                                    </h3>
+                                </div>
+
+                                <div className="space-y-6">
                                     {weights.map((w, i) => (
-                                        <div key={i} className="space-y-2">
-                                            <div className="flex justify-between text-xs">
-                                                <span className="text-zinc-400">
-                                                    {mode === 'neuro' ? `Synapse ${i + 1} Strength` : `Weight ${i + 1}`}
+                                        <div key={i} className="space-y-3">
+                                            <div className="flex justify-between items-center text-xs font-mono">
+                                                <span className="text-zinc-400 font-semibold tracking-wide">
+                                                    {mode === 'neuro' ? `Synapse ${i + 1} (w_${i})` : `Weight w_${i}`}
                                                 </span>
-                                                <span className={cn("font-mono", w < 0 ? "text-rose-400" : "text-emerald-400")}>
+                                                <span className={cn("px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800", w < 0 ? "text-rose-400" : "text-emerald-400")}>
                                                     {w.toFixed(2)}
                                                 </span>
                                             </div>
@@ -129,7 +142,7 @@ export default function LinearAlgebraPage() {
                                                     newW[i] = val;
                                                     setWeights(newW);
                                                 }}
-                                                className={cn(w < 0 ? "bg-rose-950/20" : "bg-emerald-950/20")}
+                                                className={cn("cursor-pointer", w < 0 ? "[&_.absolute]:bg-rose-500" : "[&_.absolute]:bg-emerald-500")}
                                             />
                                         </div>
                                     ))}
@@ -140,62 +153,114 @@ export default function LinearAlgebraPage() {
                     </div>
 
                     {/* RIGHT COLUMN: Visuals */}
-                    <div className="col-span-8 lg:col-span-9 flex flex-col bg-zinc-950 relative overflow-hidden items-center justify-center">
-                        <div className="flex items-end justify-center h-full w-full gap-8 p-12">
-                            {/* Inputs */}
-                            <div className="flex gap-4 items-end">
-                                {inputs.map((inVal, i) => (
-                                    <div key={i} className="flex flex-col items-center gap-2">
-                                        <div className="w-12 bg-zinc-800 rounded-t overflow-hidden relative border border-zinc-700 h-64">
-                                            <div
-                                                className="absolute bottom-0 w-full bg-blue-500/80 transition-all duration-100 ease-linear"
-                                                style={{ height: `${Math.abs(inVal) * 100}%` }}
-                                            />
+                    <div className="col-span-9 flex flex-col bg-zinc-950 relative overflow-hidden items-center justify-center">
+                        <div className="flex-1 w-full flex flex-col items-center justify-center p-8 overflow-y-auto">
+
+                            {/* THE TANKS */}
+                            <div className="flex items-end justify-center w-full gap-12 mb-16 transform scale-100">
+                                {/* Inputs */}
+                                <div className="flex gap-8 items-end">
+                                    {inputs.map((inVal, i) => (
+                                        <div key={i} className="flex flex-col items-center gap-4">
+                                            <div className="w-20 bg-zinc-900/50 rounded-lg overflow-hidden relative border border-zinc-800 h-80 shadow-2xl">
+                                                {/* Grid lines */}
+                                                {[0.25, 0.5, 0.75].map((tick) => (
+                                                    <div key={tick} className="absolute w-full h-px bg-zinc-800/50" style={{ bottom: `${tick * 100}%` }} />
+                                                ))}
+                                                <div
+                                                    className="absolute bottom-0 w-full bg-blue-500/80 transition-all duration-100 ease-linear shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+                                                    style={{ height: `${Math.abs(inVal) * 100}%` }}
+                                                >
+                                                    <div className="absolute top-0 left-0 w-full h-1 bg-white/20" />
+                                                </div>
+                                            </div>
+                                            <div className="text-center">
+                                                <div className="text-xs text-zinc-500 font-mono mb-1">
+                                                    x<sub>{i}</sub>
+                                                </div>
+                                                <div className="text-lg font-bold text-zinc-300 font-mono">
+                                                    {inVal.toFixed(2)}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <span className="text-xs text-zinc-500 font-mono">
-                                            {mode === 'neuro' ? `Firing Rate ${i}` : `x_${i}`}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Weights (Visual Connection) */}
-                            <div className="h-64 flex flex-col justify-around text-zinc-600">
-                                {weights.map((w, i) => (
-                                    <div key={i} className="flex items-center gap-2">
-                                        <div className="w-8 h-px bg-zinc-700" />
-                                        <span className="text-xs">× {w.toFixed(1)}</span>
-                                        <div className="w-8 h-px bg-zinc-700" />
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* The SUMMATION TANK */}
-                            <div className="flex flex-col items-center gap-2">
-                                <div className="w-32 h-64 bg-zinc-900 rounded-lg border-2 border-zinc-700 relative overflow-hidden shadow-inner">
-                                    {/* Liquid */}
-                                    <div
-                                        className={cn(
-                                            "absolute bottom-0 w-full transition-all duration-300 ease-out flex items-center justify-center text-white font-bold",
-                                            dotProduct < 0 ? "bg-rose-500/80" : "bg-emerald-500/80"
-                                        )}
-                                        style={{
-                                            height: `${Math.min(Math.abs(dotProduct) * 33, 100)}%`, // Scale appropriately
-                                        }}
-                                    >
-                                        <span className="drop-shadow-md z-10">{dotProduct.toFixed(2)}</span>
-                                        {/* Reflection glint */}
-                                        <div className="absolute top-0 left-0 w-full h-2 bg-white/20" />
-                                    </div>
-
-                                    {/* Grid lines */}
-                                    {[0.25, 0.5, 0.75].map((tick) => (
-                                        <div key={tick} className="absolute w-full h-px bg-zinc-800" style={{ bottom: `${tick * 100}%` }} />
                                     ))}
                                 </div>
-                                <span className="text-xs text-zinc-500 font-mono">
-                                    {mode === 'neuro' ? "Soma Potential" : "Sum (y)"}
-                                </span>
+
+                                {/* Operator / Arrow */}
+                                <div className="h-80 flex flex-col justify-center pb-12">
+                                    <div className="text-zinc-700 text-6xl font-thin opacity-50">
+                                        &rarr;
+                                    </div>
+                                </div>
+
+                                {/* The SUMMATION TANK */}
+                                <div className="flex flex-col items-center gap-4">
+                                    <div className="w-32 h-80 bg-zinc-900/50 rounded-lg border-2 border-zinc-700 relative overflow-hidden shadow-2xl">
+                                        {/* Grid lines */}
+                                        {[0.25, 0.5, 0.75].map((tick) => (
+                                            <div key={tick} className="absolute w-full h-px bg-zinc-800" style={{ bottom: `${tick * 100}%` }} />
+                                        ))}
+
+                                        {/* Liquid */}
+                                        <div
+                                            className={cn(
+                                                "absolute bottom-0 w-full transition-all duration-300 ease-out flex items-center justify-center text-white font-bold",
+                                                dotProduct < 0 ? "bg-rose-500/80 shadow-[0_0_30px_rgba(244,63,94,0.4)]" : "bg-emerald-500/80 shadow-[0_0_30px_rgba(16,185,129,0.4)]"
+                                            )}
+                                            style={{
+                                                height: `${Math.min(Math.abs(dotProduct) * 33, 100)}%`, // Scale appropriately
+                                            }}
+                                        >
+                                            {/* Reflection glint */}
+                                            <div className="absolute top-0 left-0 w-full h-2 bg-white/20" />
+                                        </div>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-xs text-zinc-500 font-mono mb-1">
+                                            y (Sum)
+                                        </div>
+                                        <div className={cn("text-3xl font-bold font-mono", dotProduct < 0 ? "text-rose-400" : "text-emerald-400")}>
+                                            {dotProduct.toFixed(2)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* ACTIVE FORMULA DISPLAY (Read-Only) */}
+                            <div className="w-full max-w-5xl bg-zinc-900/30 border border-zinc-800 rounded-xl p-8 backdrop-blur-sm">
+                                <div className="flex flex-wrap items-center justify-center gap-y-4 gap-x-2 font-mono text-lg md:text-xl">
+
+                                    <span className="text-zinc-500 italic mr-4">y =</span>
+
+                                    {weights.map((w, i) => (
+                                        <React.Fragment key={i}>
+                                            {i > 0 && <span className="text-zinc-600 mx-2">+</span>}
+
+                                            <div className="flex items-center bg-zinc-950/50 px-3 py-2 rounded border border-zinc-800/50">
+                                                {/* Weight */}
+                                                <span className={cn("font-bold", w < 0 ? "text-rose-400" : "text-emerald-400")}>
+                                                    {w.toFixed(2)}
+                                                </span>
+                                                <span className="text-zinc-600 mx-2">·</span>
+                                                {/* Input */}
+                                                <span className="text-blue-400">
+                                                    {inputs[i].toFixed(2)}
+                                                </span>
+                                            </div>
+                                        </React.Fragment>
+                                    ))}
+
+                                    <span className="text-zinc-600 mx-4">=</span>
+
+                                    {/* Result */}
+                                    <span className={cn("font-bold text-2xl px-4 py-2 rounded bg-zinc-950 border border-zinc-800", dotProduct < 0 ? "text-rose-400" : "text-emerald-400")}>
+                                        {dotProduct.toFixed(2)}
+                                    </span>
+
+                                </div>
+                                <div className="text-center mt-4 text-xs text-zinc-500 uppercase tracking-widest">
+                                    Live Computation
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -204,3 +269,4 @@ export default function LinearAlgebraPage() {
         </div>
     );
 }
+

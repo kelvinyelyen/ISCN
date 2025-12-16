@@ -19,8 +19,8 @@ export const getLinearContent = (mode: Mode) => {
                                     Thousands of synapses fire onto a single neuron. The cell body (Soma) adds them all up.
                                 </p>
                                 <ul className="list-disc list-inside ml-2 space-y-1">
-                                    <li><strong className="text-blue-400">Firing Rate ($x_i$):</strong> How fast the input neuron is spiking.</li>
-                                    <li><strong className="text-amber-400">Synaptic Weight ($w_i$):</strong> How strong the connection is.</li>
+                                    <li><strong className="text-blue-400">Firing Rate (<InlineMath math="x_i" />):</strong> How fast the input neuron is spiking.</li>
+                                    <li><strong className="text-amber-400">Synaptic Weight (<InlineMath math="w_i" />):</strong> How strong the connection is.</li>
                                 </ul>
                                 <BlockMath>{"I_{soma} = \\sum w_i \\cdot x_i"}</BlockMath>
                             </div>
@@ -51,11 +51,11 @@ export const getLinearContent = (mode: Mode) => {
                         content: (
                             <div className="space-y-2 text-sm text-zinc-300">
                                 <p>
-                                    A single neuron acts like a DJ's mixing board.
+                                    A single neuron acts like a DJ&apos;s mixing board.
                                 </p>
                                 <ul className="list-disc list-inside ml-2 space-y-1">
-                                    <li><strong className="text-blue-400">Inputs ($x_i$):</strong> The signals coming in (Channels).</li>
-                                    <li><strong className="text-amber-400">Weights ($w_i$):</strong> The volume faders.</li>
+                                    <li><strong className="text-blue-400">Inputs (<InlineMath math="x_i" />):</strong> The signals coming in (Channels).</li>
+                                    <li><strong className="text-amber-400">Weights (<InlineMath math="w_i" />):</strong> The volume faders.</li>
                                 </ul>
                                 <BlockMath>{"y = \\vec{w} \\cdot \\vec{x} = \\sum w_i x_i"}</BlockMath>
                             </div>
@@ -67,7 +67,7 @@ export const getLinearContent = (mode: Mode) => {
                         content: (
                             <div className="text-sm text-zinc-300">
                                 <p>
-                                    In math, "Phase Inversion". In audio, this cancels out sound. In the brain, this is called <strong>Inhibition</strong>.
+                                    In math, &quot;Phase Inversion&quot;. In audio, this cancels out sound. In the brain, this is called <strong>Inhibition</strong>.
                                 </p>
                             </div>
                         )

@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from 'next/link';
 import { Slider } from "@/components/ui/slider";
 import { Activity } from "lucide-react";
-import { Button } from '@/components/ui/button';
 import {
     Select,
     SelectContent,
@@ -126,7 +125,6 @@ export default function PhasePlanePage() {
                 ctx.lineTo(end.x, end.y);
                 ctx.stroke();
 
-                const angle = Math.atan2(-drawDy, drawDx);
                 ctx.beginPath();
                 ctx.arc(end.x, end.y, 1.5, 0, Math.PI * 2);
                 ctx.fill();
@@ -320,7 +318,7 @@ export default function PhasePlanePage() {
                 desc: "Generic Cubic System (FHN).",
                 eq: "\\begin{cases} \\dot{x} = x - \\frac{x^3}{3} - y + c \\\\ \\tau \\dot{y} = x + a - by \\end{cases}",
                 color: "blue",
-                live: (s: any) => `\\begin{aligned} \\dot{x} &= ${s.x.toFixed(2)} - \\frac{(${s.x.toFixed(2)})^3}{3} - ${s.y.toFixed(2)} + ${paramI.toFixed(2)} = \\mathbf{${s.dx.toFixed(2)}} \\\\ \\dot{y} &= \\tau(${s.x.toFixed(2)} + a - b(${s.y.toFixed(2)})) = \\mathbf{${s.dy.toFixed(2)}} \\end{aligned}`
+                live: (s: { x: number, y: number, dx: number, dy: number }) => `\\begin{aligned} \\dot{x} &= ${s.x.toFixed(2)} - \\frac{(${s.x.toFixed(2)})^3}{3} - ${s.y.toFixed(2)} + ${paramI.toFixed(2)} = \\mathbf{${s.dx.toFixed(2)}} \\\\ \\dot{y} &= \\tau(${s.x.toFixed(2)} + a - b(${s.y.toFixed(2)})) = \\mathbf{${s.dy.toFixed(2)}} \\end{aligned}`
             };
             case 'eco': return {
                 header: "Predator-Prey Dynamics",
@@ -330,7 +328,7 @@ export default function PhasePlanePage() {
                 desc: "Lotka-Volterra equations.",
                 eq: "\\begin{cases} \\dot{x} = \\alpha x - \\beta xy \\\\ \\dot{y} = \\delta xy - \\gamma y \\end{cases}",
                 color: "amber",
-                live: (s: any) => `\\begin{aligned} \\dot{x} &= ${(1 + paramI * 0.5).toFixed(2)}(${s.x.toFixed(2)}) - ${beta}(${s.x.toFixed(2)})(${s.y.toFixed(2)}) = \\mathbf{${s.dx.toFixed(2)}} \\\\ \\dot{y} &= ${delta}(${s.x.toFixed(2)})(${s.y.toFixed(2)}) - ${gamma}(${s.y.toFixed(2)}) = \\mathbf{${s.dy.toFixed(2)}} \\end{aligned}`
+                live: (s: { x: number, y: number, dx: number, dy: number }) => `\\begin{aligned} \\dot{x} &= ${(1 + paramI * 0.5).toFixed(2)}(${s.x.toFixed(2)}) - ${beta}(${s.x.toFixed(2)})(${s.y.toFixed(2)}) = \\mathbf{${s.dx.toFixed(2)}} \\\\ \\dot{y} &= ${delta}(${s.x.toFixed(2)})(${s.y.toFixed(2)}) - ${gamma}(${s.y.toFixed(2)}) = \\mathbf{${s.dy.toFixed(2)}} \\end{aligned}`
             };
             case 'neuro': return {
                 header: "Excitable Dynamics",
@@ -340,7 +338,7 @@ export default function PhasePlanePage() {
                 desc: "FitzHugh-Nagumo Model.",
                 eq: "\\begin{cases} \\dot{V} = V - \\frac{V^3}{3} - w + I \\\\ \\tau \\dot{w} = V + a - bw \\end{cases}",
                 color: "emerald",
-                live: (s: any) => `\\begin{aligned} \\dot{V} &= ... = \\mathbf{${s.dx.toFixed(2)}} \\\\ \\dot{w} &= ... = \\mathbf{${s.dy.toFixed(2)}} \\end{aligned}`
+                live: (s: { x: number, y: number, dx: number, dy: number }) => `\\begin{aligned} \\dot{V} &= ... = \\mathbf{${s.dx.toFixed(2)}} \\\\ \\dot{w} &= ... = \\mathbf{${s.dy.toFixed(2)}} \\end{aligned}`
             };
             case 'exp': return {
                 header: "Exponential Growth/Decay",
@@ -350,7 +348,7 @@ export default function PhasePlanePage() {
                 desc: "Fundamental linear dynamics.",
                 eq: "\\begin{cases} \\dot{x} = x + c \\\\ \\dot{y} = -y \\end{cases}",
                 color: "purple",
-                live: (s: any) => `\\begin{aligned} \\dot{x} &= ${s.x.toFixed(2)} + ${paramI.toFixed(2)} = \\mathbf{${s.dx.toFixed(2)}} \\\\ \\dot{y} &= -${s.y.toFixed(2)} = \\mathbf{${s.dy.toFixed(2)}} \\end{aligned}`
+                live: (s: { x: number, y: number, dx: number, dy: number }) => `\\begin{aligned} \\dot{x} &= ${s.x.toFixed(2)} + ${paramI.toFixed(2)} = \\mathbf{${s.dx.toFixed(2)}} \\\\ \\dot{y} &= -${s.y.toFixed(2)} = \\mathbf{${s.dy.toFixed(2)}} \\end{aligned}`
             };
             case 'harmonic': return {
                 header: "Harmonic Oscillator",
@@ -360,7 +358,7 @@ export default function PhasePlanePage() {
                 desc: "Springs and Pendulums.",
                 eq: "\\begin{cases} \\dot{x} = v \\\\ \\dot{v} = -x - \\delta v \\end{cases}",
                 color: "cyan",
-                live: (s: any) => `\\begin{aligned} \\dot{x} &= ${s.y.toFixed(2)} \\\\ \\dot{v} &= -${s.x.toFixed(2)} - \\delta(${s.y.toFixed(2)}) = \\mathbf{${s.dy.toFixed(2)}} \\end{aligned}`
+                live: (s: { x: number, y: number, dx: number, dy: number }) => `\\begin{aligned} \\dot{x} &= ${s.y.toFixed(2)} \\\\ \\dot{v} &= -${s.x.toFixed(2)} - \\delta(${s.y.toFixed(2)}) = \\mathbf{${s.dy.toFixed(2)}} \\end{aligned}`
             };
             case 'logistic': return {
                 header: "Logistic Growth",
@@ -370,7 +368,7 @@ export default function PhasePlanePage() {
                 desc: "Population with carrying capacity.",
                 eq: "\\begin{cases} \\dot{x} = r x (1 - \\frac{x}{K}) \\\\ \\dot{y} = -y \\end{cases}",
                 color: "rose",
-                live: (s: any) => `\\begin{aligned} \\dot{x} &= r(${s.x.toFixed(2)})(1 - \\frac{${s.x.toFixed(2)}}{${K}}) = \\mathbf{${s.dx.toFixed(2)}} \\\\ \\dot{y} &= -${s.y.toFixed(2)} \\end{aligned}`
+                live: (s: { x: number, y: number, dx: number, dy: number }) => `\\begin{aligned} \\dot{x} &= r(${s.x.toFixed(2)})(1 - \\frac{${s.x.toFixed(2)}}{${K}}) = \\mathbf{${s.dx.toFixed(2)}} \\\\ \\dot{y} &= -${s.y.toFixed(2)} \\end{aligned}`
             };
         }
     };
@@ -380,160 +378,176 @@ export default function PhasePlanePage() {
 
     return (
         <div className="h-screen bg-zinc-950 text-zinc-200 font-mono flex flex-col overflow-hidden">
-
-            {/* Header */}
-            <header className="h-12 border-b border-zinc-900 flex items-center justify-between px-4 bg-zinc-950/80 backdrop-blur-sm z-10 shrink-0">
-                <div className="flex items-center gap-3">
-                    <div className={cn("w-2 h-2 rounded-full animate-pulse", `bg-${labels.color}-500`)} />
-                    <h1 className="text-lg font-bold tracking-tight text-white">
-                        <Link href="/" className="hover:text-emerald-400 transition-colors">ISCN</Link> <span className="text-zinc-400 font-normal text-base">| {labels.header}</span>
-                    </h1>
+            {/* MOBILE GUARD */}
+            <div className="flex md:hidden flex-col items-center justify-center h-full p-8 text-center space-y-6 bg-zinc-950 z-50">
+                <div className="w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800">
+                    <Activity className="w-8 h-8 text-emerald-500 animate-pulse" />
                 </div>
-
-                <div className="flex items-center gap-4">
-                    <Select value={mode} onValueChange={(v: Mode) => setMode(v)}>
-                        <SelectTrigger className="w-[180px] h-8 bg-zinc-900 border-zinc-800 text-xs text-zinc-200">
-                            <SelectValue placeholder="Select Context" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-zinc-900 border-zinc-800 max-h-[400px]">
-                            <SelectItem value="math" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
-                                <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500" /> Pure Math</span>
-                            </SelectItem>
-                            <SelectItem value="eco" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
-                                <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500" /> Ecosystem</span>
-                            </SelectItem>
-                            <SelectItem value="neuro" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
-                                <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500" /> Neuroscience</span>
-                            </SelectItem>
-                            <SelectItem value="exp" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
-                                <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-purple-500" /> Exponential</span>
-                            </SelectItem>
-                            <SelectItem value="harmonic" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
-                                <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-cyan-500" /> Harmonic Osc</span>
-                            </SelectItem>
-                            <SelectItem value="logistic" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
-                                <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-rose-500" /> Logistic Map</span>
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    <div className="h-4 w-px bg-zinc-800" />
-
-                    <ConceptDialog {...content} />
+                <div>
+                    <h1 className="text-xl font-bold text-white mb-2">Scientific Workstation</h1>
+                    <p className="text-zinc-500 text-sm leading-relaxed max-w-xs mx-auto">
+                        Please access this simulation on a <span className="text-zinc-300">Desktop</span> or <span className="text-zinc-300">Tablet</span>.
+                    </p>
                 </div>
-            </header>
+            </div>
 
-            <main className="flex-1 grid grid-cols-12 gap-0 overflow-hidden h-full">
+            {/* DESKTOP CONTENT */}
+            <div className="hidden md:flex flex-col h-full">
 
-                {/* LEFT COLUMN: Controls */}
-                <div className="col-span-4 lg:col-span-3 flex flex-col border-r border-zinc-900 bg-zinc-900/30 relative">
-                    <div className="absolute inset-0 overflow-y-auto scrollbar-hide p-6 space-y-6">
-
-                        {/* Visualizer Status - Replaced with Equation Block */}
-                        <div className="p-4 bg-zinc-900/40 border border-zinc-800 rounded-lg shadow-sm text-center">
-                            <h2 className="text-xs text-zinc-400 uppercase tracking-widest mb-3 font-semibold">System Equations</h2>
-                            <div className="text-sm text-zinc-300">
-                                <BlockMath>{labels.eq}</BlockMath>
-                            </div>
-                        </div>
-
-                        {/* Controls */}
-                        <div className="space-y-6">
-                            <div className="space-y-3 p-3 rounded border border-zinc-800/50 bg-zinc-900/30">
-                                <label className="flex justify-between text-[10px] text-zinc-400 uppercase">
-                                    <span>{labels.param}</span>
-                                    <span className="font-mono text-zinc-200">{paramI.toFixed(2)}</span>
-                                </label>
-                                <Slider
-                                    value={[paramI]}
-                                    min={-1.0}
-                                    max={1.5}
-                                    step={0.01}
-                                    onValueChange={(val) => setParamI(val[0])}
-                                    className="[&>.bg-primary]:bg-emerald-500"
-                                />
-                                <div className="flex justify-between text-[10px] text-zinc-600 font-mono">
-                                    <span>Low</span>
-                                    <span>Med</span>
-                                    <span>High</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Legend */}
-                        <div className="space-y-3">
-                            <h3 className="text-[10px] uppercase text-zinc-500 tracking-widest">Geometry</h3>
-
-                            <div className="flex items-center gap-3 text-xs">
-                                <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                                <span className="text-zinc-300">Nullcline 1 <InlineMath>{"\\dot{x}=0"}</InlineMath></span>
-                            </div>
-                            <div className="flex items-center gap-3 text-xs">
-                                <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                                <span className="text-zinc-300">Nullcline 2 <InlineMath>{"\\dot{y}=0"}</InlineMath></span>
-                            </div>
-                            <div className="flex items-center gap-3 text-xs">
-                                <div className="w-3 h-3 rounded-full bg-zinc-100 border border-zinc-500"></div>
-                                <span className="text-zinc-300">Fixed Point <InlineMath>{"(\\dot{x}=\\dot{y}=0)"}</InlineMath></span>
-                            </div>
-                            <div className="flex items-center gap-3 text-xs">
-                                <div className={`w-8 h-0.5 border-t-2 border-dashed border-${labels.color}-500`}></div>
-                                <span className="text-zinc-300">Trajectory</span>
-                            </div>
-                        </div>
-
-                        <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded text-xs text-zinc-400 leading-relaxed">
-                            {labels.desc}
-                        </div>
+                {/* Header */}
+                <header className="h-12 border-b border-zinc-900 flex items-center justify-between px-4 bg-zinc-950/80 backdrop-blur-sm z-10 shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className={cn("w-2 h-2 rounded-full animate-pulse", `bg-${labels.color}-500`)} />
+                        <h1 className="text-lg font-bold tracking-tight text-white">
+                            <Link href="/" className="hover:text-emerald-400 transition-colors">ISCN</Link> <span className="text-zinc-400 font-normal text-base">| {labels.header}</span>
+                        </h1>
                     </div>
-                </div>
 
-                {/* RIGHT COLUMN: Visuals */}
-                <div className="col-span-8 lg:col-span-9 flex flex-col bg-zinc-950 relative overflow-hidden items-center justify-center">
+                    <div className="flex items-center gap-4">
+                        <Select value={mode} onValueChange={(v: Mode) => setMode(v)}>
+                            <SelectTrigger className="w-[180px] h-8 bg-zinc-900 border-zinc-800 text-xs text-zinc-200">
+                                <SelectValue placeholder="Select Context" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-zinc-900 border-zinc-800 max-h-[400px]">
+                                <SelectItem value="math" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
+                                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500" /> Pure Math</span>
+                                </SelectItem>
+                                <SelectItem value="eco" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
+                                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500" /> Ecosystem</span>
+                                </SelectItem>
+                                <SelectItem value="neuro" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
+                                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500" /> Neuroscience</span>
+                                </SelectItem>
+                                <SelectItem value="exp" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
+                                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-purple-500" /> Exponential</span>
+                                </SelectItem>
+                                <SelectItem value="harmonic" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
+                                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-cyan-500" /> Harmonic Osc</span>
+                                </SelectItem>
+                                <SelectItem value="logistic" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
+                                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-rose-500" /> Logistic Map</span>
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
 
-                    {/* Canvas */}
-                    <div className="relative border border-zinc-800 rounded bg-zinc-925 shadow-2xl">
-                        <canvas
-                            ref={canvasRef}
-                            width={1000}
-                            height={750}
-                            className="block cursor-crosshair"
-                            onMouseMove={handleMouseMove}
-                            onMouseLeave={() => setMousePos(null)}
-                        />
+                        <div className="h-4 w-px bg-zinc-800" />
 
-                        {/* Live Probe Overlay */}
-                        {liveState && (
-                            <div className="absolute top-4 left-4 p-4 bg-black/80 backdrop-blur-md border border-zinc-800 rounded text-zinc-200 shadow-xl pointer-events-none z-20 max-w-sm">
-                                <h4 className="text-[10px] uppercase text-zinc-500 tracking-widest mb-2 font-semibold flex items-center gap-2">
-                                    <Activity size={12} /> Live Probe
-                                </h4>
-                                <div className="text-xs space-y-1 font-mono text-zinc-400 mb-3 border-b border-zinc-800 pb-2">
-                                    <div>x: {liveState.x.toFixed(2)}</div>
-                                    <div>y: {liveState.y.toFixed(2)}</div>
-                                </div>
-                                <div className="text-xs">
-                                    <BlockMath>{labels.live(liveState)}</BlockMath>
+                        <ConceptDialog {...content} />
+                    </div>
+                </header>
+
+                <main className="flex-1 grid grid-cols-12 gap-0 overflow-hidden h-full">
+
+                    {/* LEFT COLUMN: Controls */}
+                    <div className="col-span-4 lg:col-span-3 flex flex-col border-r border-zinc-900 bg-zinc-900/30 relative">
+                        <div className="absolute inset-0 overflow-y-auto scrollbar-hide p-6 space-y-6">
+
+                            {/* Visualizer Status - Replaced with Equation Block */}
+                            <div className="p-4 bg-zinc-900/40 border border-zinc-800 rounded-lg shadow-sm text-center">
+                                <h2 className="text-xs text-zinc-400 uppercase tracking-widest mb-3 font-semibold">System Equations</h2>
+                                <div className="text-sm text-zinc-300">
+                                    <BlockMath>{labels.eq}</BlockMath>
                                 </div>
                             </div>
-                        )}
 
-                        {/* Axis Labels */}
-                        <div className="absolute bottom-2 right-4 text-xs font-bold text-zinc-500 bg-zinc-900/80 px-2 py-1 rounded backdrop-blur-md border border-zinc-800">
-                            {labels.xAxis} &rarr;
-                        </div>
-                        <div className="absolute top-4 right-1/2 translate-x-1/2 text-xs font-bold text-zinc-500 bg-zinc-900/80 px-2 py-1 rounded backdrop-blur-md border border-zinc-800">
-                            &uarr; {labels.yAxis}
-                        </div>
+                            {/* Controls */}
+                            <div className="space-y-6">
+                                <div className="space-y-3 p-3 rounded border border-zinc-800/50 bg-zinc-900/30">
+                                    <label className="flex justify-between text-[10px] text-zinc-400 uppercase">
+                                        <span>{labels.param}</span>
+                                        <span className="font-mono text-zinc-200">{paramI.toFixed(2)}</span>
+                                    </label>
+                                    <Slider
+                                        value={[paramI]}
+                                        min={-1.0}
+                                        max={1.5}
+                                        step={0.01}
+                                        onValueChange={(val) => setParamI(val[0])}
+                                        className="[&>.bg-primary]:bg-emerald-500"
+                                    />
+                                    <div className="flex justify-between text-[10px] text-zinc-600 font-mono">
+                                        <span>Low</span>
+                                        <span>Med</span>
+                                        <span>High</span>
+                                    </div>
+                                </div>
+                            </div>
 
-                        <div className="absolute bottom-4 left-4 text-[10px] uppercase text-zinc-600 bg-zinc-950/50 px-2 py-1 rounded border border-zinc-800 opacity-50">
-                            {labels.header}
+                            {/* Legend */}
+                            <div className="space-y-3">
+                                <h3 className="text-[10px] uppercase text-zinc-500 tracking-widest">Geometry</h3>
+
+                                <div className="flex items-center gap-3 text-xs">
+                                    <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                                    <span className="text-zinc-300">Nullcline 1 <InlineMath>{"\\dot{x}=0"}</InlineMath></span>
+                                </div>
+                                <div className="flex items-center gap-3 text-xs">
+                                    <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                                    <span className="text-zinc-300">Nullcline 2 <InlineMath>{"\\dot{y}=0"}</InlineMath></span>
+                                </div>
+                                <div className="flex items-center gap-3 text-xs">
+                                    <div className="w-3 h-3 rounded-full bg-zinc-100 border border-zinc-500"></div>
+                                    <span className="text-zinc-300">Fixed Point <InlineMath>{"(\\dot{x}=\\dot{y}=0)"}</InlineMath></span>
+                                </div>
+                                <div className="flex items-center gap-3 text-xs">
+                                    <div className={`w-8 h-0.5 border-t-2 border-dashed border-${labels.color}-500`}></div>
+                                    <span className="text-zinc-300">Trajectory</span>
+                                </div>
+                            </div>
+
+                            <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded text-xs text-zinc-400 leading-relaxed">
+                                {labels.desc}
+                            </div>
                         </div>
                     </div>
 
-                </div>
+                    {/* RIGHT COLUMN: Visuals */}
+                    <div className="col-span-8 lg:col-span-9 flex flex-col bg-zinc-950 relative overflow-hidden items-center justify-center">
 
-            </main>
+                        {/* Canvas */}
+                        <div className="relative border border-zinc-800 rounded bg-zinc-925 shadow-2xl">
+                            <canvas
+                                ref={canvasRef}
+                                width={1000}
+                                height={750}
+                                className="block cursor-crosshair"
+                                onMouseMove={handleMouseMove}
+                                onMouseLeave={() => setMousePos(null)}
+                            />
+
+                            {/* Live Probe Overlay */}
+                            {liveState && (
+                                <div className="absolute top-4 left-4 p-4 bg-black/80 backdrop-blur-md border border-zinc-800 rounded text-zinc-200 shadow-xl pointer-events-none z-20 max-w-sm">
+                                    <h4 className="text-[10px] uppercase text-zinc-500 tracking-widest mb-2 font-semibold flex items-center gap-2">
+                                        <Activity size={12} /> Live Probe
+                                    </h4>
+                                    <div className="text-xs space-y-1 font-mono text-zinc-400 mb-3 border-b border-zinc-800 pb-2">
+                                        <div>x: {liveState.x.toFixed(2)}</div>
+                                        <div>y: {liveState.y.toFixed(2)}</div>
+                                    </div>
+                                    <div className="text-xs">
+                                        <BlockMath>{labels.live(liveState)}</BlockMath>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Axis Labels */}
+                            <div className="absolute bottom-2 right-4 text-xs font-bold text-zinc-500 bg-zinc-900/80 px-2 py-1 rounded backdrop-blur-md border border-zinc-800">
+                                {labels.xAxis} &rarr;
+                            </div>
+                            <div className="absolute top-4 right-1/2 translate-x-1/2 text-xs font-bold text-zinc-500 bg-zinc-900/80 px-2 py-1 rounded backdrop-blur-md border border-zinc-800">
+                                &uarr; {labels.yAxis}
+                            </div>
+
+                            <div className="absolute bottom-4 left-4 text-[10px] uppercase text-zinc-600 bg-zinc-950/50 px-2 py-1 rounded border border-zinc-800 opacity-50">
+                                {labels.header}
+                            </div>
+                        </div>
+
+                    </div>
+
+                </main>
+            </div>
         </div>
     );
 }

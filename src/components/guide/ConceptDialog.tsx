@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { BookOpen } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 export interface ConceptSection {
     title: string;

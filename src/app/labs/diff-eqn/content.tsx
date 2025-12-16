@@ -60,7 +60,7 @@ export const getPhaseContent = (mode: Mode) => {
                         color: "emerald",
                         content: (
                             <div className="space-y-2 text-sm text-zinc-300">
-                                <p>How does a neuron spike? It's a battle between two forces:</p>
+                                <p>How does a neuron spike? It&apos;s a battle between two forces:</p>
                                 <ul className="list-disc list-inside ml-2 space-y-1">
                                     <li><strong className="text-emerald-400">Excitation (<InlineMath>V</InlineMath>):</strong> Sodium channels opening. Fast positive feedback.</li>
                                     <li><strong className="text-amber-400">Recovery (<InlineMath>w</InlineMath>):</strong> Potassium channels / Leaking. Slow negative feedback.</li>
@@ -74,10 +74,10 @@ export const getPhaseContent = (mode: Mode) => {
                         content: (
                             <div className="text-sm text-zinc-300">
                                 <p>
-                                    The <strong>Nullclines</strong> define the "tipping point".
+                                    The <strong>Nullclines</strong> define the &quot;tipping point&quot;.
                                 </p>
                                 <p className="mt-2">
-                                    If you inject enough Current (<InlineMath>I</InlineMath>), you push the state past the threshold. The system must then take a long "excursion" (a spike) before returning to rest. This is an <strong>Action Potential</strong>.
+                                    If you inject enough Current (<InlineMath>I</InlineMath>), you push the state past the threshold. The system must then take a long &quot;excursion&quot; (a spike) before returning to rest. This is an <strong>Action Potential</strong>.
                                 </p>
                             </div>
                         )
@@ -195,10 +195,10 @@ export const getPhaseContent = (mode: Mode) => {
                         content: (
                             <div className="text-sm text-zinc-300">
                                 <p>
-                                    This isn't a graph of <InlineMath>x</InlineMath> vs time. It's a map where every point is a <strong>possible state</strong> of the system.
+                                    This isn&apos;t a graph of <InlineMath>x</InlineMath> vs time. It&apos;s a map where every point is a <strong>possible state</strong> of the system.
                                 </p>
                                 <p className="mt-2">
-                                    The arrows form a <strong>Vector Field</strong>. They tell you: "If you are here, this is where you go next."
+                                    The arrows form a <strong>Vector Field</strong>. They tell you: &quot;If you are here, this is where you go next.&quot;
                                 </p>
                             </div>
                         )
