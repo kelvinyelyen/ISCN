@@ -325,14 +325,6 @@ export default function ProbabilityPage() {
                     <div className="flex-1 flex items-center justify-center p-0">
                         <canvas ref={canvasRef} className="w-full h-full bg-zinc-950 overflow-hidden" />
                     </div>
-                    
-                    <div className="p-4 px-10 border-t border-zinc-800/50 flex justify-between items-center bg-zinc-950/50">
-                        <div className="flex items-center gap-3">
-                            <div className={cn("w-2 h-2 rounded-full", mode === 'coin' ? "bg-emerald-500" : "bg-purple-500")} />
-                            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-zinc-500 font-mono">Telemetry: Online // Rate: 1.2 kHz </span>
-                        </div>
-                        <span className="text-[10px] text-zinc-700 uppercase tracking-widest font-mono">Engine: {mode === 'coin' ? "STOCH_BERN" : "STOCH_POISS"}</span>
-                    </div>
                 </section>
             </main>
         </div>
