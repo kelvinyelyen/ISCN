@@ -295,14 +295,6 @@ export default function ProbabilityPage() {
                     <div className="flex-1 flex items-center justify-center p-6">
                         <canvas ref={canvasRef} className="w-full h-full bg-zinc-950 rounded-xl border border-zinc-800/50 shadow-2xl overflow-hidden" />
                     </div>
-                    
-                    <div className="p-4 px-10 border-t border-zinc-800/50 flex justify-between items-center bg-zinc-950/50">
-                        <div className="flex items-center gap-3">
-                            <div className={cn("w-2 h-2 rounded-full", mode === 'coin' ? "bg-emerald-500" : "bg-purple-500")} />
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 font-mono">System: High-DPI Active</span>
-                        </div>
-                        <span className="text-[10px] text-zinc-700 uppercase tracking-widest font-mono">Resolution: Scaled_Retina</span>
-                    </div>
                 </section>
             </main>
         </div>
