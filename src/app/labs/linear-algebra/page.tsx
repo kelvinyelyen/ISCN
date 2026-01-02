@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from 'next/link';
 import { Slider } from "@/components/ui/slider";
-import { Activity, FunctionSquare, Info } from "lucide-react";
+import { Activity, FunctionSquare } from "lucide-react";
 import {
     Select,
     SelectContent,
@@ -81,7 +81,7 @@ export default function LinearAlgebraPage() {
                 <aside className="w-96 flex flex-col gap-6 shrink-0 overflow-hidden">
                     <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-2xl space-y-8 flex flex-col shadow-sm h-full">
                         
-                        {/* Formula Display */}
+                        {/* Formula Display with Integrated Net Result Descriptions */}
                         <div className="space-y-4">
                             <div className="flex items-center gap-2">
                                 <FunctionSquare className="w-3.5 h-3.5 text-zinc-600" />
@@ -94,15 +94,28 @@ export default function LinearAlgebraPage() {
                                     {mode === 'neuron' ? "I_{\\text{sum}} = \\sum_{i} w_i x_i" : "y = \\vec{w} \\cdot \\vec{x}"}
                                 </BlockMath>
                             </div>
-                            <p className="text-[11px] text-zinc-500 leading-relaxed italic">
-                                {mode === 'neuron' 
-                                    ? "Summing synaptic inputs at the soma to determine the total membrane current." 
-                                    : "Calculating the algebraic similarity between two vectors through element-wise multiplication."}
-                            </p>
+                            <div className="space-y-2">
+                                <p className="text-[11px] text-zinc-500 leading-relaxed italic">
+                                    {mode === 'neuron' 
+                                        ? "Summing synaptic inputs at the soma to determine the total membrane current." 
+                                        : "Calculating the algebraic similarity between two vectors through element-wise multiplication."}
+                                </p>
+                                {/* Dynamic Net Result Description moved here */}
+                                <div className="p-3 rounded-lg bg-zinc-950/50 border border-zinc-800/50">
+                                    <p className={cn(
+                                        "text-[11px] font-medium leading-tight",
+                                        dotProduct < 0 ? "text-rose-400/90" : "text-emerald-400/90"
+                                    )}>
+                                        {mode === 'neuron' 
+                                            ? (dotProduct > 0.5 ? "Status: Threshold reached. The neuron is likely to fire an action potential." : "Status: Sub-threshold. Signal is too weak to trigger a spike.")
+                                            : `Magnitude: ${dotProduct.toFixed(2)}. This represents the scale of the projection on the weight vector.`}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Parameter Sliders */}
-                        <div className="space-y-6 pt-6 border-t border-zinc-800/50">
+                        <div className="space-y-6 pt-6 border-t border-zinc-800/50 overflow-y-auto custom-scrollbar pr-2">
                             <div className="space-y-1">
                                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">
                                     {mode === 'neuron' ? "Synaptic Weights" : "Vector Components"}
@@ -144,27 +157,6 @@ export default function LinearAlgebraPage() {
                                     </div>
                                 ))}
                             </div>
-                        </div>
-
-                        {/* Telemetry */}
-                        <div className="pt-6 border-t border-zinc-800/50 space-y-3 mt-auto">
-                            <div className="flex items-center gap-2">
-                                <Info className="w-3.5 h-3.5 text-zinc-600" />
-                                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">
-                                    Net Result
-                                </span>
-                            </div>
-                            <div className={cn(
-                                "text-2xl font-bold font-mono p-3 rounded-xl border border-zinc-800 text-center bg-zinc-950 shadow-inner",
-                                dotProduct < 0 ? "text-rose-400" : "text-emerald-400"
-                            )}>
-                                {dotProduct.toFixed(2)}
-                            </div>
-                            <p className="text-[11px] text-zinc-500 text-center px-2">
-                                {mode === 'neuron' 
-                                    ? (dotProduct > 0.5 ? "Threshold reached: Likely to spike." : "Sub-threshold: Staying silent.")
-                                    : "Magnitude of the projection on the weight vector."}
-                            </p>
                         </div>
                     </div>
                 </aside>
