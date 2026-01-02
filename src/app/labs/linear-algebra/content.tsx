@@ -50,7 +50,7 @@ export const getLinearContent = (mode: Mode) => {
                         content: (
                             <div className="space-y-2 text-sm text-zinc-300">
                                 <p>Stability requires subtraction. Negative weights (Inhibition) prevent runaway excitation (seizures).</p>
-                                <p className="text-rose-400 font-mono text-xs">If Σw_i > Threshold → Runaway</p>
+                                <p className="text-rose-400 font-mono text-xs">If Σw_i &gt; Threshold → Runaway</p>
                             </div>
                         )
                     }
