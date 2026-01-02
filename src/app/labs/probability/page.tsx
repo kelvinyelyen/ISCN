@@ -19,20 +19,17 @@ type Mode = 'coin' | 'poisson';
 
 export default function ProbabilityPage() {
     const [mode, setMode] = useState<Mode>('poisson');
-    const [rate, setRate] = useState(0.5); // Lambda or P(Heads)
+    const [rate, setRate] = useState(0.5); 
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    // Refs for high-frequency simulation data (avoids re-rendering loop)
     const coinHistoryRef = useRef<number[]>([]);
     const spikeTimesRef = useRef<number[]>([]);
 
-    // State for low-frequency UI updates
     const [stats, setStats] = useState<{
         coinCounts: { heads: number; total: number };
         spikeCount: number;
     }>({ coinCounts: { heads: 0, total: 0 }, spikeCount: 0 });
 
-    const lastTimeRef = useRef(0); // This ref is not used in the new logic, can be removed if not needed elsewhere.
     const lastUiUpdateRef = useRef(0);
 
     const getLabels = (m: Mode) => {
@@ -40,6 +37,8 @@ export default function ProbabilityPage() {
             case 'coin': return {
                 header: "Bernoulli Process",
                 param: "Probability (p)",
+                color: "text-emerald-400",
+                accent: "bg-emerald-500",
                 desc: "Simulating independent binary events (Ion Channels).",
                 live: () => {
                     const { heads, total } = stats.coinCounts;
@@ -49,6 +48,8 @@ export default function ProbabilityPage() {
             case 'poisson': return {
                 header: "Poisson Process",
                 param: "Firing Rate (λ)",
+                color: "text-purple-400",
+                accent: "bg-purple-500",
                 desc: "Simulating random spike arrival times.",
                 live: () => `Count: ${stats.spikeCount} spikes`
             };
@@ -58,12 +59,10 @@ export default function ProbabilityPage() {
     const labels = getLabels(mode);
     const guideContent = getProbabilityContent(mode);
 
-    // Reset when mode changes
     useEffect(() => {
         coinHistoryRef.current = [];
         spikeTimesRef.current = [];
         setStats({ coinCounts: { heads: 0, total: 0 }, spikeCount: 0 });
-        lastTimeRef.current = 0;
     }, [mode]);
 
     useEffect(() => {
@@ -73,23 +72,18 @@ export default function ProbabilityPage() {
         if (!ctx) return;
 
         let animationId: number;
-        // Use standard time tracking
-        let lastFrameTime = performance.now() / 1000; // seconds
+        let lastFrameTime = performance.now() / 1000;
 
         const render = () => {
-            const now = performance.now() / 1000; // seconds
+            const now = performance.now() / 1000;
             const dt = now - lastFrameTime;
             lastFrameTime = now;
 
-            // CLEAR
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#18181b"; // zinc-900 (matches bg)
+            ctx.fillStyle = "#18181b"; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             if (mode === 'coin') {
-                // --- BERNOULLI (COIN) MODE ---
-                // Use dt for consistent speed regardless of framerate
-                // Flip rate: e.g., 5 flips per second
                 const flipRate = 5;
                 if (Math.random() < flipRate * dt) {
                     const outcome = Math.random() < rate ? 1 : 0;
@@ -97,18 +91,12 @@ export default function ProbabilityPage() {
                 }
 
                 const history = coinHistoryRef.current;
-
-                // Draw Stream
                 const coinSize = 10;
                 const streamY = 100;
+                
                 history.forEach((outcome, i) => {
-                    // index 0 is oldest. We want newest on right? 
-                    // Usually arrays push to end. slice(-200) keeps end.
-                    // So history[length-1] is newest.
-                    // Let's draw newest at right edge.
-                    const ageIndex = (history.length - 1) - i; // 0 for newest
+                    const ageIndex = (history.length - 1) - i;
                     const x = canvas.width - 50 - (ageIndex * (coinSize + 5));
-
                     if (x < 0) return;
                     ctx.beginPath();
                     ctx.arc(x, streamY, coinSize / 2, 0, Math.PI * 2);
@@ -116,32 +104,25 @@ export default function ProbabilityPage() {
                     ctx.fill();
                 });
 
-                // Draw Stats Bars
                 const heads = history.filter(c => c === 1).length;
                 const tails = history.filter(c => c === 0).length;
                 const total = history.length || 1;
-
                 const barWidth = 60;
                 const maxBarHeight = 150;
 
-                // Labels
                 ctx.font = "12px monospace";
-
-                // Tails
                 const hTails = (tails / total) * maxBarHeight;
                 ctx.fillStyle = "#ef4444";
                 ctx.fillRect(canvas.width / 4 - barWidth / 2, canvas.height - 50 - hTails, barWidth, hTails);
                 ctx.fillStyle = "#fff";
                 ctx.fillText(`0 (Closed): ${(tails / total).toFixed(2)}`, canvas.width / 4 - 40, canvas.height - 30);
 
-                // Heads
                 const hHeads = (heads / total) * maxBarHeight;
                 ctx.fillStyle = "#10b981";
                 ctx.fillRect(3 * canvas.width / 4 - barWidth / 2, canvas.height - 50 - hHeads, barWidth, hHeads);
                 ctx.fillStyle = "#fff";
                 ctx.fillText(`1 (Open): ${(heads / total).toFixed(2)}`, 3 * canvas.width / 4 - 35, canvas.height - 30);
 
-                // Target Line
                 const targetY = canvas.height - 50 - (rate * maxBarHeight);
                 ctx.strokeStyle = "#fbbf24";
                 ctx.setLineDash([5, 5]);
@@ -154,52 +135,35 @@ export default function ProbabilityPage() {
                 ctx.fillText(`Target p=${rate.toFixed(2)}`, canvas.width - 100, targetY - 5);
 
             } else {
-                // --- POISSON (SPIKES) MODE ---
-
-                // 1. UPDATE PHYSICS
-                const realRate = 5 + (rate * 45); // 5Hz to 50Hz
-                // Poisson prob in dt: lambda * dt
+                const realRate = 5 + (rate * 45); 
                 if (Math.random() < realRate * dt) {
-                    // Store time in SECONDS
                     spikeTimesRef.current.push(now);
-                    // Prune old spikes (> 5 seconds old)
                     const cutoff = now - 5.0;
-                    if (spikeTimesRef.current.length > 0 && spikeTimesRef.current[0] < cutoff) {
-                        // Simple optimization: remove if too old. 
-                        // Or just slice to keep array size manageable.
-                        spikeTimesRef.current = spikeTimesRef.current.filter(t => t >= cutoff);
-                    }
+                    spikeTimesRef.current = spikeTimesRef.current.filter(t => t >= cutoff);
                 }
                 const spikes = spikeTimesRef.current;
-
-                // Layout Constants
                 const rasterY = 80;
                 const histBottom = canvas.height - 40;
                 const histHeight = 150;
                 const histX = 60;
                 const histWidth = canvas.width - 120;
+                const scrollSpeed = 150;
 
-                // 2. DRAW RASTER
-                const scrollSpeed = 150; // px/s
-
-                // Label
                 ctx.fillStyle = "#a1a1aa";
                 ctx.font = "12px monospace";
                 ctx.fillText(`RASTER PLOT (Rate: ~${realRate.toFixed(0)}Hz)`, 20, 30);
 
-                // Axis
                 ctx.strokeStyle = "#3f3f46";
                 ctx.beginPath();
                 ctx.moveTo(0, rasterY);
                 ctx.lineTo(canvas.width, rasterY);
                 ctx.stroke();
 
-                // Spikes
-                ctx.strokeStyle = "#a855f7"; // Purple
+                ctx.strokeStyle = "#a855f7"; 
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 spikes.forEach(t => {
-                    const age = now - t; // seconds
+                    const age = now - t;
                     const x = canvas.width - 50 - (age * scrollSpeed);
                     if (x > 0 && x < canvas.width) {
                         ctx.moveTo(x, rasterY - 15);
@@ -208,18 +172,13 @@ export default function ProbabilityPage() {
                 });
                 ctx.stroke();
 
-                // 3. CALCULATE HISTOGRAM (ISI)
-                // We need ISIs from the *entire* recent history to build a distribution
-                // But typically ISIs are built over time. 
-                // For this demo, let's just calculate ISIs from the visible buffer (5s).
-
                 const isis: number[] = [];
                 for (let i = 1; i < spikes.length; i++) {
-                    isis.push(spikes[i] - spikes[i - 1]); // seconds
+                    isis.push(spikes[i] - spikes[i - 1]);
                 }
 
                 if (isis.length > 2) {
-                    const maxIsi = 0.2; // 200ms window
+                    const maxIsi = 0.2;
                     const binCount = 30;
                     const binSize = maxIsi / binCount;
                     const bins = new Array(binCount).fill(0);
@@ -231,14 +190,9 @@ export default function ProbabilityPage() {
                         }
                     });
 
-                    // 4. DRAW HISTOGRAM
                     ctx.fillStyle = "#a1a1aa";
                     ctx.fillText("ISI HISTOGRAM (Inter-Spike Intervals)", 20, histBottom - histHeight - 20);
-
-                    // Normalize height
-                    // Heuristic: Max bin usually corresponds to peak probability
                     const maxBinVal = Math.max(...bins, 1);
-
                     const barW = histWidth / binCount;
 
                     ctx.fillStyle = "rgba(168, 85, 247, 0.3)";
@@ -249,43 +203,22 @@ export default function ProbabilityPage() {
                         const h = (count / maxBinVal) * histHeight;
                         const x = histX + (i * barW);
                         const y = histBottom - h;
-
                         ctx.fillRect(x, y, barW - 1, h);
                         ctx.strokeRect(x, y, barW - 1, h);
                     });
 
-                    // 5. THEORETICAL CURVE
-                    // PDF: lambda * e^(-lambda * t)
-                    // At t=0, val = lambda. 
-                    // We need to scale match the visual peak.
-                    // The visual peak (bin 0) is roughly proportional to P(0).
-                    // So we can align the curves at t=0 or based on maxBinVal.
-
                     ctx.beginPath();
                     ctx.strokeStyle = "#0ed3cf";
                     ctx.lineWidth = 2;
-
                     for (let px = 0; px <= histWidth; px += 2) {
                         const tVal = (px / histWidth) * maxIsi;
-                        const theoryVal = Math.exp(-realRate * tVal); // shape e^-lt
-
-                        // Scale: theoryVal is 1.0 at t=0.
-                        // We want it to match the histogram's 'ideal' height at t=0? 
-                        // Let's just scale it to the full plot height for clear visibility of shape comparison
-                        // or match it to the max bin if we want to be accurate.
-                        // Matching Max Bin is tricky if data is noisy. 
-                        // Let's simplified: Scale such that t=0 is 90% of plot height 
-                        // IF the data normalized similarly. 
-                        // Actually, comparing *Shape* is key.
-
+                        const theoryVal = Math.exp(-realRate * tVal);
                         const y = histBottom - (theoryVal * histHeight);
-
                         if (px === 0) ctx.moveTo(histX + px, y);
                         else ctx.lineTo(histX + px, y);
                     }
                     ctx.stroke();
 
-                    // Legend
                     ctx.fillStyle = "#0ed3cf";
                     ctx.fillText("Theory (Exp Decay)", histX + histWidth - 150, histBottom - histHeight);
                     ctx.fillStyle = "#a855f7";
@@ -293,7 +226,6 @@ export default function ProbabilityPage() {
                 }
             }
 
-            // UI SYNC (Throttled 10Hz)
             if (now - lastUiUpdateRef.current > 0.1) {
                 lastUiUpdateRef.current = now;
                 setStats({
@@ -310,7 +242,7 @@ export default function ProbabilityPage() {
 
         animationId = requestAnimationFrame(render);
         return () => cancelAnimationFrame(animationId);
-    }, [mode, rate]); // Dep array clean!
+    }, [mode, rate]);
 
 
     return (
@@ -328,7 +260,6 @@ export default function ProbabilityPage() {
                 </div>
             </div>
 
-            {/* Header */}
             {/* DESKTOP CONTENT */}
             <div className="hidden md:flex flex-col h-full w-full">
                 <header className="h-12 border-b border-zinc-900 flex items-center justify-between px-4 bg-zinc-950/80 backdrop-blur-sm z-10 shrink-0">
@@ -360,23 +291,18 @@ export default function ProbabilityPage() {
                     </div>
                 </header>
 
-                {/* Main Content - Scrollable Wrapper */}
                 <main className="flex-1 overflow-y-auto bg-zinc-950 relative scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
-                    <div className="min-h-full flex flex-col items-center justify-center p-6 pb-20">
-                        <canvas
-                            ref={canvasRef}
-                            width={800}
-                            height={400}
-                            className="rounded-lg shadow-2xl border border-zinc-800 bg-zinc-900/80 mb-8 w-full max-w-4xl shrink-0"
-                        />
-
-                        <div className="w-full max-w-md space-y-6 bg-zinc-900/80 p-6 rounded-xl border border-white/10 backdrop-blur-sm shrink-0">
+                    {/* Layout container: Left sidebar for controls, right for visualization */}
+                    <div className="min-h-full flex flex-row items-start justify-start p-8 gap-10 lg:px-16">
+                        
+                        {/* Control Box on the Left */}
+                        <div className="w-80 space-y-6 bg-zinc-900/80 p-6 rounded-xl border border-white/10 backdrop-blur-sm shrink-0 sticky top-8">
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center">
-                                    <label className="text-sm font-medium text-emerald-400">
+                                    <label className={cn("text-sm font-medium transition-colors", labels.color)}>
                                         {labels.param}
                                     </label>
-                                    <span className="font-mono text-xs bg-zinc-950 px-2 py-1 rounded text-emerald-300">
+                                    <span className={cn("font-mono text-xs bg-zinc-950 px-2 py-1 rounded", labels.color)}>
                                         {rate.toFixed(2)}
                                     </span>
                                 </div>
@@ -386,21 +312,31 @@ export default function ProbabilityPage() {
                                     max={0.99}
                                     step={0.01}
                                     onValueChange={([v]) => setRate(v)}
-                                    className="py-2"
+                                    className={cn("py-2", mode === 'poisson' ? "[&_[role=slider]]:bg-purple-500" : "[&_[role=slider]]:bg-emerald-500")}
                                 />
-                                <p className="text-xs text-zinc-500 italic text-center">
+                                <p className="text-xs text-zinc-500 italic leading-relaxed">
                                     {labels.desc}
                                 </p>
                             </div>
 
                             <div className="pt-4 border-t border-zinc-800">
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-zinc-400">Live Stats:</span>
-                                    <span className="font-mono text-white">
+                                <div className="flex flex-col gap-2 text-sm">
+                                    <span className="text-zinc-500 text-xs uppercase tracking-wider font-bold">Telemetry</span>
+                                    <span className="font-mono text-white bg-zinc-950 p-2 rounded border border-zinc-800 text-center">
                                         {labels.live()}
                                     </span>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Visualization on the Right */}
+                        <div className="flex-1 flex flex-col items-center">
+                            <canvas
+                                ref={canvasRef}
+                                width={800}
+                                height={400}
+                                className="rounded-lg shadow-2xl border border-zinc-800 bg-zinc-900/80 w-full max-w-4xl"
+                            />
                         </div>
                     </div>
                 </main>
