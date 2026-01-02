@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from 'next/link';
 import { Slider } from "@/components/ui/slider";
-import { Activity, FunctionSquare, Layers, Zap } from "lucide-react";
+import { Activity, FunctionSquare, Zap, ChevronRight } from "lucide-react";
 import {
     Select,
     SelectContent,
@@ -12,158 +12,189 @@ import {
     SelectValue
 } from '@/components/ui/select';
 import { cn } from "@/lib/utils";
-import { ConceptDialog } from '@/components/guide/ConceptDialog';
-import { getLinearContent } from './content'; // Update content to match new modes
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 
-// Unified "Whitebox" Modes: Biology is the context.
-type Mode = 'synapse' | 'neuron' | 'circuit';
+// 1. Types & Constants
+type Scale = 'synapse' | 'neuron' | 'circuit';
 
-export default function LinearAlgebraPage() {
-    const [mode, setMode] = useState<Mode>('neuron');
-    
-    // Level 1 & 2: Vector of weights
-    const [weights, setWeights] = useState<number[]>([0.5, -0.2, 0.8]);
-    // Level 3: Matrix of weights (3x3)
-    const [matrix, setMatrix] = useState<number[][]>([
-        [0.8, -0.1, 0.2],
-        [-0.4, 0.9, -0.2],
-        [0.1, 0.3, 0.7]
-    ]);
-    
+const SCALE_DATA = {
+    synapse: {
+        title: "Synaptic Gain",
+        formula: "y = w \cdot x",
+        description: "A single connection scaling a signal.",
+        inputCount: 1,
+        outputCount: 1
+    },
+    neuron: {
+        title: "Spatial Summation",
+        formula: "V_{sum} = \sum_{i=1}^{n} w_i x_i",
+        description: "Multiple inputs converging on a single cell body.",
+        inputCount: 3,
+        outputCount: 1
+    },
+    circuit: {
+        title: "Neural Mapping",
+        formula: "\mathbf{y} = \mathbf{W}\mathbf{x}",
+        description: "A layer of neurons transforming a pattern of activity.",
+        inputCount: 3,
+        outputCount: 3
+    }
+};
+
+export default function WhiteboxCompNeuro() {
+    // 2. State
+    const [scale, setScale] = useState<Scale>('neuron');
     const [inputs, setInputs] = useState<number[]>([0.5, 0.5, 0.5]);
-    const requestRef = useRef<number>(0);
+    const [weights, setWeights] = useState<number[]>([0.6, -0.4, 0.3]);
+    // 3x3 Matrix for Circuit Level
+    const [matrix, setMatrix] = useState<number[][]>([
+        [0.7, 0.2, -0.1],
+        [-0.3, 0.8, 0.4],
+        [0.2, -0.5, 0.6]
+    ]);
 
-    const animateMixer = useCallback(() => {
+    // 3. Animation Loop (Simulating Neural Activity)
+    const requestRef = useRef<number>(0);
+    const animate = useCallback(() => {
         const time = Date.now() / 1000;
         setInputs([
-            Math.sin(time + 0) * 0.5 + 0.5,
-            Math.sin(time + 2) * 0.5 + 0.5,
-            Math.sin(time + 4) * 0.5 + 0.5,
+            Math.sin(time) * 0.4 + 0.5,
+            Math.sin(time + 2) * 0.4 + 0.5,
+            Math.sin(time + 4) * 0.4 + 0.5,
         ]);
-        requestRef.current = requestAnimationFrame(animateMixer);
+        requestRef.current = requestAnimationFrame(animate);
     }, []);
 
     useEffect(() => {
-        requestRef.current = requestAnimationFrame(animateMixer);
-        return () => { if (requestRef.current) cancelAnimationFrame(requestRef.current); };
-    }, [animateMixer]);
+        requestRef.current = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(requestRef.current);
+    }, [animate]);
 
-    // Calculation Logic
-    const getOutputs = () => {
-        if (mode === 'synapse') return [inputs[0] * weights[0]];
-        if (mode === 'neuron') return [weights.reduce((acc, w, i) => acc + w * inputs[i], 0)];
-        // Matrix multiplication for 'circuit'
+    // 4. Mathematical Core
+    const getOutputs = (): number[] => {
+        if (scale === 'synapse') return [inputs[0] * weights[0]];
+        if (scale === 'neuron') return [weights.reduce((acc, w, i) => acc + w * inputs[i], 0)];
+        // Matrix Multiplication: W * x
         return matrix.map(row => row.reduce((acc, w, i) => acc + w * inputs[i], 0));
     };
 
     const outputs = getOutputs();
-    const content = getLinearContent(mode);
 
     return (
-        <div className="h-screen bg-zinc-950 text-zinc-200 flex flex-col overflow-hidden select-none font-sans">
-            <header className="h-14 border-b border-zinc-900 flex items-center justify-between px-6 bg-zinc-950 shrink-0">
+        <div className="h-screen bg-zinc-950 text-zinc-200 flex flex-col overflow-hidden font-sans">
+            {/* Header */}
+            <header className="h-14 border-b border-zinc-900 flex items-center justify-between px-6 shrink-0">
                 <div className="flex items-center gap-4">
-                    <Zap className={cn("w-5 h-5", mode === 'circuit' ? "text-purple-500" : "text-emerald-500")} />
-                    <h1 className="text-lg font-semibold tracking-tight text-white">
-                        <Link href="/" className="hover:opacity-80 transition-opacity">ISCN</Link>
-                        <span className="mx-3 text-zinc-700">/</span>
-                        <span className="text-zinc-400 font-medium capitalize">{mode} Level</span>
+                    <Activity className="w-5 h-5 text-emerald-500" />
+                    <h1 className="text-lg font-semibold text-white tracking-tight">
+                        ISCN <span className="mx-2 text-zinc-800">/</span> 
+                        <span className="text-zinc-400 capitalize">{scale} Level</span>
                     </h1>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <Select value={mode} onValueChange={(v: Mode) => setMode(v)}>
-                        <SelectTrigger className="w-[200px] h-9 bg-zinc-900 border-zinc-800 text-sm text-zinc-200 font-mono">
-                            <SelectValue placeholder="Scale" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-zinc-900 border-zinc-800">
-                            <SelectItem value="synapse" className="text-white">1. Synaptic Gain</SelectItem>
-                            <SelectItem value="neuron" className="text-white">2. Spatial Summation</SelectItem>
-                            <SelectItem value="circuit" className="text-white">3. Neural Mapping</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <ConceptDialog {...content} />
-                </div>
+                <Select value={scale} onValueChange={(v: Scale) => setScale(v)}>
+                    <SelectTrigger className="w-56 bg-zinc-900 border-zinc-800 font-mono">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-800">
+                        <SelectItem value="synapse">1. Synapse (Scalar)</SelectItem>
+                        <SelectItem value="neuron">2. Neuron (Vector)</SelectItem>
+                        <SelectItem value="circuit">3. Circuit (Matrix)</SelectItem>
+                    </SelectContent>
+                </Select>
             </header>
 
-            <main className="flex-1 flex overflow-hidden p-8 gap-8">
-                <aside className="w-80 flex flex-col gap-6 shrink-0 overflow-y-auto">
-                    <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-2xl space-y-8 flex flex-col shadow-sm">
-                        
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2">
-                                <FunctionSquare className="w-3.5 h-3.5 text-zinc-600" />
-                                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Neural Math</span>
+            <main className="flex-1 flex p-6 gap-6 overflow-hidden">
+                {/* Left: Controls */}
+                <aside className="w-80 flex flex-col gap-4 overflow-y-auto pr-2">
+                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-5 space-y-6">
+                        <div>
+                            <div className="flex items-center gap-2 mb-3">
+                                <FunctionSquare className="w-4 h-4 text-zinc-500" />
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Formalism</span>
                             </div>
-                            <div className="bg-black/30 rounded-xl p-4 flex items-center justify-center border border-zinc-800/30 min-h-[80px] text-white">
-                                <BlockMath>
-                                    {mode === 'synapse' ? "y = w \cdot x" : 
-                                     mode === 'neuron' ? "V_{sum} = \sum w_i x_i" : 
-                                     "\mathbf{y} = \mathbf{W}\mathbf{x}"}
-                                </BlockMath>
+                            <div className="bg-black/40 rounded-xl p-4 border border-zinc-800/50 text-center">
+                                <BlockMath>{SCALE_DATA[scale].formula}</BlockMath>
                             </div>
                         </div>
 
-                        <div className="space-y-6 pt-6 border-t border-zinc-800/50">
-                            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">
-                                {mode === 'circuit' ? "Connectivity Matrix" : "Synaptic Strengths"}
+                        <div className="space-y-4">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                                {scale === 'circuit' ? "Synaptic Matrix" : "Synaptic Weights"}
                             </span>
                             
-                            {/* DYNAMIC PARAMETER SECTION */}
-                            <div className="space-y-6">
-                                {mode !== 'circuit' ? (
-                                    weights.slice(0, mode === 'synapse' ? 1 : 3).map((w, i) => (
-                                        <div key={i} className="space-y-3">
-                                            <div className="flex justify-between items-center font-mono text-zinc-400">
-                                                <span className="text-[11px] font-bold">w_{i}</span>
-                                                <span className={cn("text-xs font-bold px-2 py-0.5 rounded", w < 0 ? "text-rose-400" : "text-emerald-400")}>
-                                                    {w.toFixed(2)}
-                                                </span>
-                                            </div>
-                                            <Slider 
-                                                min={-1} max={1} step={0.1} value={[w]} 
-                                                onValueChange={([val]) => {
-                                                    const newW = [...weights];
-                                                    newW[i] = val;
-                                                    setWeights(newW);
+                            {scale !== 'circuit' ? (
+                                weights.slice(0, scale === 'synapse' ? 1 : 3).map((w, i) => (
+                                    <div key={i} className="space-y-2">
+                                        <div className="flex justify-between text-[11px] font-mono">
+                                            <span className="text-zinc-400">w_{i}</span>
+                                            <span className={w < 0 ? "text-rose-400" : "text-emerald-400"}>{w.toFixed(2)}</span>
+                                        </div>
+                                        <Slider 
+                                            min={-1} max={1} step={0.05} value={[w]}
+                                            onValueChange={([val]) => {
+                                                const next = [...weights];
+                                                next[i] = val;
+                                                setWeights(next);
+                                            }}
+                                        />
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="grid grid-cols-3 gap-2">
+                                    {matrix.map((row, r) => row.map((val, c) => (
+                                        <div key={`${r}-${c}`} className="flex flex-col gap-1">
+                                            <input 
+                                                type="number"
+                                                step="0.1"
+                                                className="bg-zinc-800 text-[10px] p-1 rounded border border-zinc-700 text-center focus:outline-none focus:border-emerald-500"
+                                                value={val}
+                                                onChange={(e) => {
+                                                    const next = [...matrix];
+                                                    next[r][c] = parseFloat(e.target.value) || 0;
+                                                    setMatrix(next);
                                                 }}
                                             />
                                         </div>
-                                    ))
-                                ) : (
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {/* Matrix mini-inputs could go here for "Whitebox" editing */}
-                                        <p className="col-span-3 text-[10px] text-zinc-500 italic text-center">Interactive Grid visualization recommended</p>
-                                    </div>
-                                )}
-                            </div>
+                                    )))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </aside>
 
-                <section className="flex-1 bg-zinc-900/30 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col relative">
-                    <div className="flex-1 flex flex-col items-center justify-center p-6 gap-12">
-                        
-                        <div className="flex items-end justify-center w-full gap-8">
-                            {/* INPUTS */}
-                            <div className="flex gap-4 items-end">
-                                {inputs.slice(0, mode === 'synapse' ? 1 : 3).map((inVal, i) => (
-                                    <Tank key={i} value={inVal} label={`x_${i}`} color="bg-blue-500/60" />
-                                ))}
-                            </div>
-
-                            <div className="h-48 flex flex-col justify-center text-zinc-800 text-4xl">→</div>
-
-                            {/* OUTPUTS */}
-                            <div className="flex gap-4 items-end">
-                                {outputs.map((outVal, i) => (
-                                    <Tank key={i} value={outVal} label={mode === 'circuit' ? `y_${i}` : 'V_{sum}'} color={outVal < 0 ? "bg-rose-500/50" : "bg-emerald-500/50"} isOutput />
-                                ))}
-                            </div>
+                {/* Right: Visualization */}
+                <section className="flex-1 bg-zinc-900/20 border border-zinc-800 rounded-2xl relative flex items-center justify-center overflow-hidden">
+                    <div className="flex items-center gap-12 lg:gap-24">
+                        {/* Input Layer */}
+                        <div className="flex flex-col gap-8">
+                            {inputs.slice(0, SCALE_DATA[scale].inputCount).map((v, i) => (
+                                <Tank key={i} value={v} label={`x_{${i}}`} color="bg-blue-500" />
+                            ))}
                         </div>
 
+                        <ChevronRight className="w-8 h-8 text-zinc-800" />
+
+                        {/* Output Layer */}
+                        <div className="flex flex-col gap-8">
+                            {outputs.map((v, i) => (
+                                <Tank 
+                                    key={i} 
+                                    value={v} 
+                                    label={scale === 'circuit' ? `y_{${i}}` : "V_{out}"} 
+                                    color={v < 0 ? "bg-rose-500" : "bg-emerald-500"} 
+                                    isLarge
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Scale Caption */}
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center">
+                        <p className="text-zinc-500 text-xs font-mono uppercase tracking-tighter">
+                            {SCALE_DATA[scale].description}
+                        </p>
                     </div>
                 </section>
             </main>
@@ -171,19 +202,41 @@ export default function LinearAlgebraPage() {
     );
 }
 
-// Reusable Tank Component for Whitebox Visualization
-function Tank({ value, label, color, isOutput = false }: { value: number, label: string, color: string, isOutput?: boolean }) {
+// Sub-component: The "Whitebox" Signal Tank
+function Tank({ value, label, color, isLarge = false }: { value: number, label: string, color: string, isLarge?: boolean }) {
+    // We normalize height for visual clarity: 0.5 is half full.
+    const displayHeight = Math.min(Math.abs(value) * 50, 100);
+    
     return (
-        <div className="flex flex-col items-center gap-4">
-            <div className={cn("w-12 bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden relative h-48 shadow-xl", isOutput && "w-16 border-2")}>
-                <div 
-                    className={cn("absolute bottom-0 w-full transition-all duration-150 border-t", color)}
-                    style={{ height: `${Math.min(Math.abs(value) * 50, 100)}%` }}
-                />
-            </div>
-            <div className="text-[11px] font-mono text-zinc-500 font-bold text-center">
-                <InlineMath math={label} /><br/>
-                <span className="text-zinc-400">{value.toFixed(2)}</span>
+        <div className="flex items-center gap-4">
+            <div className="flex flex-col items-center gap-2">
+                <div className={cn(
+                    "bg-zinc-900 border border-zinc-800 rounded-md relative overflow-hidden transition-all",
+                    isLarge ? "w-14 h-32 border-zinc-700 shadow-lg shadow-black/50" : "w-10 h-24"
+                )}>
+                    {/* Tick Marks */}
+                    <div className="absolute inset-0 flex flex-col justify-between p-1 opacity-20">
+                        <div className="w-full h-px bg-white" />
+                        <div className="w-full h-px bg-white" />
+                        <div className="w-full h-px bg-white" />
+                    </div>
+                    {/* Fluid */}
+                    <div 
+                        className={cn("absolute bottom-0 w-full transition-all duration-300 ease-out", color, "opacity-60")}
+                        style={{ height: `${displayHeight}%` }}
+                    />
+                    {/* Top Surface Glow */}
+                    <div 
+                        className={cn("absolute w-full h-1 transition-all duration-300", color)}
+                        style={{ bottom: `calc(${displayHeight}% - 2px)` }}
+                    />
+                </div>
+                <div className="text-center">
+                    <div className="text-[10px] font-mono text-zinc-500"><InlineMath math={label}/></div>
+                    <div className={cn("text-xs font-bold font-mono", value < 0 ? "text-rose-500" : "text-emerald-500")}>
+                        {value.toFixed(2)}
+                    </div>
+                </div>
             </div>
         </div>
     );
