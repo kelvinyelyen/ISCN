@@ -77,9 +77,9 @@ export default function LinearAlgebraPage() {
             </header>
 
             <main className="flex-1 flex overflow-hidden p-8 gap-8">
-                {/* Left Panel: Control Box */}
-                <aside className="w-80 flex flex-col gap-6 shrink-0 overflow-y-auto pr-2 custom-scrollbar">
-                    <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-2xl space-y-8 flex flex-col shadow-sm">
+                {/* Left Panel: Control Box - Width increased and scrollbar removed */}
+                <aside className="w-96 flex flex-col gap-6 shrink-0 overflow-hidden">
+                    <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-2xl space-y-8 flex flex-col shadow-sm h-full">
                         
                         {/* Formula Display */}
                         <div className="space-y-4">
@@ -147,7 +147,7 @@ export default function LinearAlgebraPage() {
                         </div>
 
                         {/* Telemetry */}
-                        <div className="pt-6 border-t border-zinc-800/50 space-y-3">
+                        <div className="pt-6 border-t border-zinc-800/50 space-y-3 mt-auto">
                             <div className="flex items-center gap-2">
                                 <Info className="w-3.5 h-3.5 text-zinc-600" />
                                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">
@@ -171,8 +171,7 @@ export default function LinearAlgebraPage() {
 
                 {/* Right Panel: Visualization Workstation */}
                 <section className="flex-1 min-w-0 bg-zinc-900/30 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col relative shadow-inner">
-                    {/*  */}
-                    <div className="flex-1 flex flex-col items-center justify-center p-6 gap-12 overflow-y-auto">
+                    <div className="flex-1 flex flex-col items-center justify-center p-6 gap-12 overflow-hidden">
                         <div className="flex items-end justify-center w-full gap-8 xl:gap-16">
                             <div className="flex gap-8 items-end">
                                 {inputs.map((inVal, i) => (
