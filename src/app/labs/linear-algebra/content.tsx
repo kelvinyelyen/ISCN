@@ -32,7 +32,7 @@ export const getLinearContent = (mode: Mode) => {
                         color: "blue",
                         content: (
                             <div className="space-y-2 text-sm text-zinc-300">
-                                <p>In a circuit, inputs are currents. The "weights" are the <strong>conductances</strong> of the channels. </p>
+                                <p>In a circuit, inputs are currents. The &quot;weights&quot; are the <strong>conductances</strong> of the channels. </p>
                                 <BlockMath math="V_{out} = \frac{\sum g_i V_i}{\sum g_i}" />
                             </div>
                         )
@@ -99,7 +99,7 @@ export const getLinearContent = (mode: Mode) => {
                         color: "emerald",
                         content: (
                             <div className="space-y-2 text-sm text-zinc-300">
-                                <p>The dot product measures how much one vector "overlaps" another. </p>
+                                <p>The dot product measures how much one vector &quot;overlaps&quot; another. </p>
                                 <BlockMath math="y = \sum w_i x_i" />
                             </div>
                         )
