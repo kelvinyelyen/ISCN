@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Play, Pause, RotateCcw, Activity, FunctionSquare, Timer, Zap, Settings2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Activity, FunctionSquare, Timer, Zap, Settings2, Eraser } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -91,6 +91,7 @@ export default function LifLab() {
     };
   }, [animate]);
 
+  // Capture ghost trace immediately on slider interaction start
   const onSliderChangeStart = () => {
     if (!ghostTrace && history.length > 10) {
       captureGhostTrace();
@@ -151,13 +152,18 @@ export default function LifLab() {
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex gap-1 mr-2">
-              <Button size="icon" variant="outline" className="h-8 w-8 border-zinc-800 bg-zinc-900 hover:bg-zinc-800" onClick={() => setIsRunning(!isRunning)}>
-                {isRunning ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3 text-emerald-500" />}
+            <div className="flex gap-1 mr-2 bg-zinc-900 p-1 rounded-md border border-zinc-800">
+              <Button size="icon" variant="ghost" className="h-7 w-7 text-zinc-400 hover:text-emerald-400 hover:bg-zinc-800" onClick={() => setIsRunning(!isRunning)}>
+                {isRunning ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
               </Button>
-              <Button size="icon" variant="outline" className="h-8 w-8 border-zinc-800 bg-zinc-900 hover:bg-zinc-800" onClick={resetSimulation}>
-                <RotateCcw className="h-3 w-3" />
+              <Button size="icon" variant="ghost" className="h-7 w-7 text-zinc-400 hover:text-white hover:bg-zinc-800" onClick={resetSimulation}>
+                <RotateCcw className="h-3.5 w-3.5" />
               </Button>
+              {ghostTrace && (
+                <Button size="icon" variant="ghost" className="h-7 w-7 text-rose-400 hover:text-rose-300 hover:bg-rose-950/20" onClick={clearGhostTrace} title="Clear Ghost Trace">
+                    <Eraser className="h-3.5 w-3.5" />
+                </Button>
+              )}
             </div>
             <ConceptDialog {...lifContent} />
           </div>
@@ -178,7 +184,7 @@ export default function LifLab() {
                     <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Governing Equation</span>
                   </div>
                   
-                  {/* LaTeX Equation Box - Compact */}
+                  {/* LaTeX Equation Box */}
                   <div className="bg-black/30 rounded-xl p-4 flex flex-col items-center justify-center border border-zinc-800/30 min-h-[90px] text-zinc-200">
                     <BlockMath math="\tau \frac{dV}{dt} = -(V - E_L) + R \cdot I(t)" />
                     <div className="text-[10px] text-zinc-600 mt-2 pt-2 border-t border-zinc-800/30 w-full text-center font-mono">
@@ -193,9 +199,9 @@ export default function LifLab() {
                 </div>
               </div>
 
-              {/* 2. Membrane Group - Compact Grid */}
-              <div className="space-y-4 pt-6 mt-6 border-t border-zinc-800/50">
-                  <div className="space-y-2">
+              {/* 2. Membrane Group - Compact Grid with extra padding below */}
+              <div className="space-y-4 pt-6 mt-6 border-t border-zinc-800/50 pb-6">
+                  <div className="space-y-1">
                     <div className="flex items-center gap-2">
                         <Settings2 className="w-3.5 h-3.5 text-zinc-600" />
                         <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Membrane Properties</span>
@@ -323,20 +329,6 @@ export default function LifLab() {
                       )}
                   </div>
               </div>
-
-              {/* Ghost Trace Controls (Moved here since footer is gone) */}
-              {ghostTrace && (
-                  <div className="pt-6 mt-auto">
-                      <Button 
-                          variant="outline"
-                          onClick={clearGhostTrace} 
-                          className="w-full text-[10px] border-zinc-800 bg-zinc-900 text-rose-400 hover:text-rose-300 hover:bg-rose-950/20 hover:border-rose-900 uppercase font-bold tracking-widest h-8"
-                      >
-                          Clear Ghost Trace
-                      </Button>
-                  </div>
-              )}
-
             </div>
           </aside>
 
