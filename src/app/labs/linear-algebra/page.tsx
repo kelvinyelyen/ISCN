@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from 'next/link';
 import { Slider } from "@/components/ui/slider";
-import { Activity, FunctionSquare, Zap, ChevronRight } from "lucide-react";
+import { Activity, FunctionSquare, ChevronRight } from "lucide-react";
 import {
     Select,
     SelectContent,
@@ -88,7 +88,7 @@ export default function WhiteboxCompNeuro() {
                 <div className="flex items-center gap-4">
                     <Activity className="w-5 h-5 text-emerald-500" />
                     <h1 className="text-lg font-semibold text-white tracking-tight">
-                        ISCN <span className="mx-2 text-zinc-800">/</span> 
+                         <Link href="/" className="hover:opacity-80 transition-opacity">ISCN</Link>
                         <span className="text-zinc-400 capitalize">{scale} Level</span>
                     </h1>
                 </div>
