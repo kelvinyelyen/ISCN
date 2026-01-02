@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Play, Pause, RotateCcw, Activity, FunctionSquare, Info, Timer } from 'lucide-react';
+import { Play, Pause, RotateCcw, Activity, FunctionSquare, Info, Timer, Zap } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -28,7 +28,7 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import { InputMode } from '@/lib/physics/lif';
-import { BlockMath } from 'react-katex';
+import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 
 // Custom Tooltip for Recharts
@@ -89,18 +89,13 @@ export default function LifLab() {
     }
   };
 
-  // Helper to render math formula based on mode
-  const renderInputMath = () => {
+  // Convert input mode formulas to LaTeX strings for BlockMath
+  const getInputLatex = () => {
     switch (params.inputMode) {
-      case 'pulse':
-        return "I(t) = A \\cdot \\delta(t - t_{spike})";
-      case 'noise':
-        return "I(t) = I_{mean} + \\sigma \\cdot \\xi(t)";
-      case 'sine':
-        return "I(t) = A \\cdot \\sin(2\\pi ft)";
-      case 'constant':
-      default:
-        return "I(t) = I_{const}";
+      case 'pulse': return "I(t) = A \\cdot \\delta(t - t_{spike})";
+      case 'noise': return "I(t) = \\mu + \\sigma \\cdot \\xi(t)";
+      case 'sine': return "I(t) = A \\cdot \\sin(2\\pi f t)";
+      case 'constant': default: return "I(t) = I_{const}";
     }
   };
 
@@ -118,10 +113,10 @@ export default function LifLab() {
         </div>
         <div className="flex items-center gap-4">
           <div className="flex gap-1 mr-2">
-            <Button size="icon" variant="outline" className="h-8 w-8 border-zinc-800 bg-zinc-900" onClick={() => setIsRunning(!isRunning)}>
+            <Button size="icon" variant="outline" className="h-8 w-8 border-zinc-800 bg-zinc-900 hover:bg-zinc-800" onClick={() => setIsRunning(!isRunning)}>
               {isRunning ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3 text-emerald-500" />}
             </Button>
-            <Button size="icon" variant="outline" className="h-8 w-8 border-zinc-800 bg-zinc-900" onClick={resetSimulation}>
+            <Button size="icon" variant="outline" className="h-8 w-8 border-zinc-800 bg-zinc-900 hover:bg-zinc-800" onClick={resetSimulation}>
               <RotateCcw className="h-3 w-3" />
             </Button>
           </div>
@@ -130,54 +125,101 @@ export default function LifLab() {
       </header>
 
       <main className="flex-1 flex overflow-hidden p-8 gap-8">
-        {/* Left Panel: Sidebar - Fixed width, no scrollbars */}
+        {/* Left Panel: Sidebar - Fixed Width, No Scrollbars */}
         <aside className="w-96 flex flex-col shrink-0 overflow-hidden">
           <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-2xl flex flex-col h-full shadow-sm">
             
-            {/* Equation & Force Balance Visualizer */}
-            <div className="space-y-4 shrink-0">
-              <div className="flex items-center gap-2">
-                <FunctionSquare className="w-3.5 h-3.5 text-zinc-600" />
-                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Governing Equation</span>
-              </div>
-              <div className="bg-black/30 rounded-xl p-4 flex flex-col items-center justify-center border border-zinc-800/30 min-h-[80px] text-white">
-                <BlockMath math="\tau \dot{V} = -(V - E_L) + R I(t)" />
-                <div className="text-[10px] text-amber-500/80 mt-2 pt-2 border-t border-zinc-800/50 w-full text-center">
-                   <BlockMath math={renderInputMath()} />
+            {/* Top Section: Equation & Visualizer */}
+            <div className="space-y-6 shrink-0">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <FunctionSquare className="w-3.5 h-3.5 text-zinc-600" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Governing Equation</span>
+                </div>
+                
+                {/* Interactive Equation Box */}
+                <div className="bg-black/30 rounded-xl p-4 flex flex-col items-center justify-center border border-zinc-800/30 min-h-[90px] relative">
+                  <div className="text-xl font-bold font-serif text-zinc-300">
+                    <span className="opacity-50 italic mr-1">τ</span>
+                    <span className="opacity-50">V&apos;</span>
+                    <span className="mx-2 text-zinc-600">=</span>
+                    <span className="text-zinc-500 mr-1">-</span>
+                    <span>(V - </span>
+                    <span 
+                      className={cn("cursor-help transition-all duration-200", hoveredTerm === 'E_L' ? "text-cyan-400 scale-110 font-black" : "text-cyan-500")}
+                      onMouseEnter={() => setHoveredTerm('E_L')} onMouseLeave={() => setHoveredTerm(null)}
+                    >E_L</span>
+                    <span>) + </span>
+                    <span 
+                      className={cn("cursor-help transition-all duration-200", hoveredTerm === 'R' ? "text-emerald-400 scale-110 font-black" : "text-emerald-500")}
+                      onMouseEnter={() => setHoveredTerm('R')} onMouseLeave={() => setHoveredTerm(null)}
+                    >R</span>
+                    <span className="mx-1">·</span>
+                    <span 
+                      className={cn("cursor-help transition-all duration-200", hoveredTerm === 'I' ? "text-amber-400 scale-110 font-black" : "text-amber-500")}
+                      onMouseEnter={() => setHoveredTerm('I')} onMouseLeave={() => setHoveredTerm(null)}
+                    >I(t)</span>
+                  </div>
+                  <div className="text-[10px] text-zinc-600 mt-2 pt-2 border-t border-zinc-800/30 w-full text-center font-mono">
+                    <BlockMath math={getInputLatex()} />
+                  </div>
                 </div>
               </div>
-              
-              {/* Visualizer Component */}
-              <div className="pt-2">
+
+              {/* Force Balance Viz */}
+              <div className="pt-1">
                  <ForceBalance />
               </div>
             </div>
 
-            {/* Controls Section - Compact & Tight */}
-            <div className="mt-6 pt-6 border-t border-zinc-800/50 flex-1 space-y-5 overflow-hidden">
-                {/* 1. Membrane Constants */}
-                <div className="space-y-3">
+            {/* Middle Section: Controls (Scrollable if needed, but hidden scrollbar) */}
+            <div className="mt-6 pt-6 border-t border-zinc-800/50 flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden space-y-6">
+                
+                {/* 1. Membrane Group */}
+                <div className="space-y-4">
                     <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Membrane Properties</span>
-                    <div className="space-y-2">
+                    
+                    <div 
+                        className={cn("space-y-2 p-2 rounded border transition-colors duration-200", hoveredTerm === 'R' ? "bg-emerald-950/20 border-emerald-500/30" : "border-transparent hover:bg-zinc-900/50")}
+                        onMouseEnter={() => setHoveredTerm('R')} onMouseLeave={() => setHoveredTerm(null)}
+                    >
                         <div className="flex justify-between text-[11px] font-mono text-zinc-400">
                             <span>Resistance (R)</span>
                             <span className="text-emerald-400">{params.R} MΩ</span>
                         </div>
                         <Slider min={1} max={100} step={1} value={[params.R]} onValueChange={(val) => setParams({ R: val[0] })} onPointerDown={onSliderChangeStart} className="[&_[role=slider]]:bg-emerald-500" />
                     </div>
-                    <div className="space-y-2">
+
+                    <div 
+                        className={cn("space-y-2 p-2 rounded border transition-colors duration-200", hoveredTerm === 'E_L' ? "bg-cyan-950/20 border-cyan-500/30" : "border-transparent hover:bg-zinc-900/50")}
+                        onMouseEnter={() => setHoveredTerm('E_L')} onMouseLeave={() => setHoveredTerm(null)}
+                    >
                         <div className="flex justify-between text-[11px] font-mono text-zinc-400">
-                            <span>Leak (E_L)</span>
+                            <span>Leak Potential (E_L)</span>
                             <span className="text-cyan-400">{params.E_L} mV</span>
                         </div>
                         <Slider min={-100} max={-40} step={1} value={[params.E_L]} onValueChange={(val) => setParams({ E_L: val[0] })} onPointerDown={onSliderChangeStart} className="[&_[role=slider]]:bg-cyan-500" />
                     </div>
+
+                    <div className="space-y-2 p-2 rounded border border-transparent hover:bg-zinc-900/50">
+                        <div className="flex justify-between text-[11px] font-mono text-zinc-400">
+                            <span>Capacitance (C)</span>
+                            <span>{params.C} μF</span>
+                        </div>
+                        <Slider min={0.1} max={5} step={0.1} value={[params.C]} onValueChange={(val) => setParams({ C: val[0] })} onPointerDown={onSliderChangeStart} />
+                    </div>
                 </div>
 
-                {/* 2. Input Stimulus */}
-                <div className="space-y-3 pt-2">
+                {/* 2. Stimulus Group */}
+                <div 
+                    className={cn("space-y-4 pt-2 rounded-xl transition-colors duration-300", hoveredTerm === 'I' ? "bg-amber-950/10 -m-2 p-2" : "")}
+                    onMouseEnter={() => setHoveredTerm('I')} onMouseLeave={() => setHoveredTerm(null)}
+                >
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Input Stimulus</span>
+                        <div className="flex items-center gap-2">
+                            <Zap className="w-3.5 h-3.5 text-amber-500" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Input Drive</span>
+                        </div>
                         <Select value={params.inputMode} onValueChange={(val: InputMode) => setParams({ inputMode: val })}>
                             <SelectTrigger className="w-24 bg-zinc-950 border-zinc-800 h-6 text-[10px] focus:ring-0 outline-none">
                                 <SelectValue />
@@ -191,8 +233,8 @@ export default function LifLab() {
                         </Select>
                     </div>
 
-                    {/* Dynamic Sliders based on Input Mode */}
-                    <div className="space-y-2">
+                    {/* Mode Specific Sliders */}
+                    <div className="space-y-3 px-1">
                         {params.inputMode === 'constant' && (
                              <div className="space-y-2">
                                 <div className="flex justify-between text-[11px] font-mono text-zinc-400">
@@ -205,23 +247,27 @@ export default function LifLab() {
                         {params.inputMode === 'pulse' && (
                             <>
                                 <div className="space-y-2">
-                                    <div className="flex justify-between text-[11px] font-mono text-zinc-400"><span>Amplitude</span><span className="text-amber-500">{params.pulseConfig.amplitude}</span></div>
+                                    <div className="flex justify-between text-[11px] font-mono text-zinc-400"><span>Amplitude</span><span className="text-amber-500">{params.pulseConfig.amplitude} nA</span></div>
                                     <Slider min={0} max={50} step={1} value={[params.pulseConfig.amplitude]} onValueChange={(val) => updateConfig('pulse', { amplitude: val[0] })} onPointerDown={onSliderChangeStart} className="[&_[role=slider]]:bg-amber-500" />
                                 </div>
                                 <div className="space-y-2">
-                                    <div className="flex justify-between text-[11px] font-mono text-zinc-400"><span>Interval</span><span>{params.pulseConfig.interval}ms</span></div>
+                                    <div className="flex justify-between text-[11px] font-mono text-zinc-400"><span>Interval</span><span>{params.pulseConfig.interval} ms</span></div>
                                     <Slider min={10} max={200} step={5} value={[params.pulseConfig.interval]} onValueChange={(val) => updateConfig('pulse', { interval: val[0] })} onPointerDown={onSliderChangeStart} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-[11px] font-mono text-zinc-400"><span>Width</span><span>{params.pulseConfig.width} ms</span></div>
+                                    <Slider min={1} max={20} step={1} value={[params.pulseConfig.width]} onValueChange={(val) => updateConfig('pulse', { width: val[0] })} onPointerDown={onSliderChangeStart} />
                                 </div>
                             </>
                         )}
                         {params.inputMode === 'noise' && (
                             <>
                                 <div className="space-y-2">
-                                    <div className="flex justify-between text-[11px] font-mono text-zinc-400"><span>Mean</span><span className="text-amber-500">{params.noiseConfig.mean}</span></div>
+                                    <div className="flex justify-between text-[11px] font-mono text-zinc-400"><span>Mean</span><span className="text-amber-500">{params.noiseConfig.mean} nA</span></div>
                                     <Slider min={0} max={20} step={0.5} value={[params.noiseConfig.mean]} onValueChange={(val) => updateConfig('noise', { mean: val[0] })} onPointerDown={onSliderChangeStart} className="[&_[role=slider]]:bg-amber-500" />
                                 </div>
                                 <div className="space-y-2">
-                                    <div className="flex justify-between text-[11px] font-mono text-zinc-400"><span>Sigma</span><span>{params.noiseConfig.sigma}</span></div>
+                                    <div className="flex justify-between text-[11px] font-mono text-zinc-400"><span>Sigma (σ)</span><span>{params.noiseConfig.sigma}</span></div>
                                     <Slider min={0} max={10} step={0.1} value={[params.noiseConfig.sigma]} onValueChange={(val) => updateConfig('noise', { sigma: val[0] })} onPointerDown={onSliderChangeStart} />
                                 </div>
                             </>
@@ -229,7 +275,7 @@ export default function LifLab() {
                         {params.inputMode === 'sine' && (
                             <>
                                 <div className="space-y-2">
-                                    <div className="flex justify-between text-[11px] font-mono text-zinc-400"><span>Amplitude</span><span className="text-amber-500">{params.sineConfig.amplitude}</span></div>
+                                    <div className="flex justify-between text-[11px] font-mono text-zinc-400"><span>Amplitude</span><span className="text-amber-500">{params.sineConfig.amplitude} nA</span></div>
                                     <Slider min={0} max={30} step={1} value={[params.sineConfig.amplitude]} onValueChange={(val) => updateConfig('sine', { amplitude: val[0] })} onPointerDown={onSliderChangeStart} className="[&_[role=slider]]:bg-amber-500" />
                                 </div>
                                 <div className="space-y-2">
@@ -242,24 +288,24 @@ export default function LifLab() {
                 </div>
             </div>
 
-            {/* Status Footer */}
+            {/* Bottom Section: Footer / Status */}
             <div className="mt-auto pt-6 border-t border-zinc-800/50 shrink-0">
                 <div className="flex items-center gap-2 mb-2 text-zinc-600">
                     <Info className="w-3.5 h-3.5" />
                     <span className="text-[10px] font-black uppercase tracking-[0.15em] font-mono">Workstation Status</span>
                 </div>
-                <div className="p-3 rounded-lg border bg-zinc-950/50 border-zinc-800/50 transition-colors duration-300">
+                <div className={cn("p-3 rounded-lg border bg-zinc-950/50 border-zinc-800/50 transition-colors duration-300", isRunning ? "border-emerald-500/10" : "")}>
                     <p className="text-[11px] font-medium leading-tight text-zinc-400">
                         {isRunning 
-                            ? "Simulation running.  Dynamics active." 
-                            : "Simulation paused. Adjust parameters to create comparison traces."}
+                            ? "Simulation running. Real-time integration active." 
+                            : "Simulation paused. Adjust parameters to inspect dynamics."}
                     </p>
                     {ghostTrace && (
                         <button 
                             onClick={clearGhostTrace} 
-                            className="mt-2 text-[10px] text-rose-400 hover:text-rose-300 hover:underline uppercase font-bold tracking-widest flex items-center gap-1"
+                            className="mt-2 w-full text-center text-[10px] text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 border border-transparent hover:border-rose-900 py-1 rounded transition-colors uppercase font-bold tracking-widest"
                         >
-                            <span>Clear Ghost Trace</span>
+                            Clear Comparison Trace
                         </button>
                     )}
                 </div>
@@ -286,12 +332,12 @@ export default function LifLab() {
           </div>
 
           <div className="absolute top-6 right-6 z-10 flex gap-3 pointer-events-none">
-            <div className="flex items-center gap-2 bg-zinc-950/80 px-3 py-1.5 rounded-full border border-zinc-800 shadow-xl">
+            <div className="flex items-center gap-2 bg-zinc-950/80 px-3 py-1.5 rounded-full border border-zinc-800 shadow-xl backdrop-blur-md">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
               <span className="text-[10px] text-zinc-300 font-bold font-mono uppercase tracking-widest">Live V_m</span>
             </div>
             {ghostTrace && (
-                <div className="flex items-center gap-2 bg-zinc-950/80 px-3 py-1.5 rounded-full border border-zinc-800 shadow-xl opacity-60">
+                <div className="flex items-center gap-2 bg-zinc-950/80 px-3 py-1.5 rounded-full border border-zinc-800 shadow-xl opacity-60 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-zinc-500" />
                     <span className="text-[10px] text-zinc-300 font-bold font-mono uppercase tracking-widest">Ghost</span>
                 </div>
@@ -306,8 +352,20 @@ export default function LifLab() {
                 <YAxis domain={[-90, -30]} hide />
                 <Tooltip content={<CustomTooltip />} />
                 
-                <ReferenceLine y={params.thresh} stroke="#ef4444" strokeDasharray="4 4" strokeOpacity={0.6} label={{ position: 'insideRight', value: 'THRESHOLD', fill: '#ef4444', fontSize: 10, opacity: 0.5 }} />
-                <ReferenceLine y={params.E_L} stroke="#0ea5e9" strokeDasharray="4 4" strokeOpacity={0.3} label={{ position: 'insideRight', value: 'REST', fill: '#0ea5e9', fontSize: 10, opacity: 0.5 }} />
+                <ReferenceLine 
+                    y={params.thresh} 
+                    stroke="#ef4444" 
+                    strokeDasharray="4 4" 
+                    strokeOpacity={0.6} 
+                    label={{ position: 'insideRight', value: 'THRESHOLD', fill: '#ef4444', fontSize: 10, opacity: 0.5, fontFamily: 'monospace' }} 
+                />
+                <ReferenceLine 
+                    y={params.E_L} 
+                    stroke="#0ea5e9" 
+                    strokeDasharray="4 4" 
+                    strokeOpacity={0.3} 
+                    label={{ position: 'insideRight', value: 'REST', fill: '#0ea5e9', fontSize: 10, opacity: 0.5, fontFamily: 'monospace' }} 
+                />
 
                 {ghostTrace && (
                   <Line data={ghostTrace} type="monotone" dataKey="voltage" stroke="#3f3f46" strokeWidth={1.5} dot={false} isAnimationActive={false} strokeOpacity={0.5} />
