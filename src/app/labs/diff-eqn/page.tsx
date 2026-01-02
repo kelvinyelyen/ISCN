@@ -290,7 +290,7 @@ export default function PhasePlanePage() {
                 <main className="flex-1 flex overflow-hidden p-6 gap-6 items-start">
                     
                     {/* Sidebar: h-fit, max-h-full, and sticky behavior if needed */}
-                    <aside className="w-[400px] flex flex-col shrink-0 overflow-hidden bg-zinc-900/50 border border-zinc-800 rounded-2xl shadow-sm h-fit max-h-full">
+                    <aside className="w-80 flex flex-col shrink-0 overflow-hidden bg-zinc-900/50 border border-zinc-800 rounded-2xl shadow-sm h-fit max-h-full">
                         
                         <div className="flex flex-col p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden">
                             
