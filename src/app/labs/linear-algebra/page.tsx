@@ -67,7 +67,7 @@ export default function LinearAlgebraPage() {
                 <header className="h-14 border-b border-zinc-900 flex items-center justify-between px-6 bg-zinc-950 shrink-0">
                     <div className="flex items-center gap-4">
                         <Activity className={cn("w-5 h-5", mode === 'neuron' ? "text-purple-500" : "text-emerald-500")} />
-                        <h1 className="text-lg font-semibold tracking-tight text-white">
+                        <h1 className="text-base font-semibold tracking-tight text-white">
                             <Link href="/" className="hover:opacity-80 transition-opacity">ISCN</Link>
                             <span className="mx-3 text-zinc-700">/</span>
                             <span className="text-zinc-400 font-medium">Signal Integration</span>
@@ -76,15 +76,15 @@ export default function LinearAlgebraPage() {
 
                     <div className="flex items-center gap-4">
                         <Select value={mode} onValueChange={(v: Mode) => setMode(v)}>
-                            <SelectTrigger className="w-[180px] h-9 bg-zinc-900 border-zinc-800 text-sm text-zinc-200 font-mono focus:ring-0 focus:outline-none">
+                            <SelectTrigger className="w-[180px] h-9 bg-zinc-900 border-zinc-800 text-sm text-zinc-200 focus:ring-0 focus:outline-none">
                                 <SelectValue placeholder="Context" />
                             </SelectTrigger>
                             <SelectContent className="bg-zinc-900 border-zinc-800">
-                                <SelectItem value="math" className="text-white hover:bg-zinc-800 cursor-pointer font-mono">
+                                <SelectItem value="math" className="text-white hover:bg-zinc-800 cursor-pointer">
                                     Math (Dot Product)
                                 </SelectItem>
-                                <SelectItem value="neuron" className="text-white hover:bg-zinc-800 cursor-pointer font-mono">
-                                    Neuron (Vector)
+                                <SelectItem value="neuron" className="text-white hover:bg-zinc-800 cursor-pointer">
+                                    Integration (Dot Product)
                                 </SelectItem>
                             </SelectContent>
                         </Select>
