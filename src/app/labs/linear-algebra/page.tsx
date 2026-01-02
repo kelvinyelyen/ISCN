@@ -130,7 +130,7 @@ export default function LinearAlgebraPage() {
                 </aside>
 
                 {/* Right Panel: Visualization Workstation */}
-                <section className="flex-1 min-w-0 bg-zinc-900/30 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col relative shadow-inner">
+                <section className="flex-1 min-w-0 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col relative shadow-inner">
                     <div className="flex-1 flex flex-col items-center justify-center p-6 gap-12 overflow-y-auto">
                         
                         {/* Tank Visualization Layer */}
@@ -191,15 +191,6 @@ export default function LinearAlgebraPage() {
                                 <span className={cn("font-bold text-xl", dotProduct < 0 ? "text-rose-400" : "text-emerald-400")}>{dotProduct.toFixed(2)}</span>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Workstation Footer */}
-                    <div className="p-4 px-10 border-t border-zinc-800/50 flex justify-between items-center bg-zinc-950/50">
-                        <div className="flex items-center gap-3">
-                            <div className={cn("w-2 h-2 rounded-full", mode === 'neuro' ? "bg-purple-500" : "bg-emerald-500")} />
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 font-mono tracking-tight">Signal Processor: Active</span>
-                        </div>
-                        <span className="text-[10px] text-zinc-700 uppercase tracking-widest font-mono">Engine: Linear_Integration_v4</span>
                     </div>
                 </section>
             </main>
