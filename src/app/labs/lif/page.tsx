@@ -31,7 +31,7 @@ import { InputMode } from '@/lib/physics/lif';
 import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 
-// 1. Custom Tooltip Component (Preserved)
+// Custom Tooltip for Recharts
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
@@ -66,7 +66,7 @@ export default function LifLab() {
     setHoveredTerm
   } = useSimulationStore();
 
-  // 2. Animation Loop Logic (Preserved)
+  // Animation Loop
   const requestRef = useRef<number>();
 
   const animate = useCallback(() => {
@@ -89,7 +89,7 @@ export default function LifLab() {
     }
   };
 
-  // 3. Helper to render math formula (Updated to return LaTeX string for the UI)
+  // Helper to render math formula based on mode
   const getInputLatex = () => {
     switch (params.inputMode) {
       case 'pulse': return "I(t) = A \\cdot \\delta(t - t_{spike})";
@@ -102,7 +102,7 @@ export default function LifLab() {
   return (
     <div className="h-screen bg-zinc-950 text-zinc-200 font-mono flex flex-col overflow-hidden select-none font-sans">
       
-      {/* 4. MOBILE GUARD (Preserved from original) */}
+      {/* MOBILE GUARD */}
       <div className="flex md:hidden flex-col items-center justify-center h-full p-8 text-center space-y-6 bg-zinc-950 z-50 fixed inset-0">
         <div className="w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800">
           <Activity className="w-8 h-8 text-emerald-500 animate-pulse" />
@@ -110,15 +110,13 @@ export default function LifLab() {
         <div>
           <h1 className="text-xl font-bold text-white mb-2">Scientific Workstation</h1>
           <p className="text-zinc-500 text-sm leading-relaxed max-w-xs mx-auto">
-            Please access this simulation on a <span className="text-zinc-300">Desktop</span> or <span className="text-zinc-300">Tablet</span> for the full experience.
+            Please access this simulation on a <span className="text-zinc-300">Desktop</span> or <span className="text-zinc-300">Tablet</span>.
           </p>
         </div>
       </div>
 
-      {/* 5. DESKTOP CONTENT */}
+      {/* DESKTOP CONTENT */}
       <div className="hidden md:flex flex-col h-full">
-        
-        {/* Header */}
         <header className="h-14 border-b border-zinc-900 flex items-center justify-between px-6 bg-zinc-950 shrink-0">
           <div className="flex items-center gap-4">
             <Activity className="w-5 h-5 text-emerald-500" />
@@ -142,12 +140,11 @@ export default function LifLab() {
         </header>
 
         <main className="flex-1 flex overflow-hidden p-8 gap-8">
-          
-          {/* Left Panel: Sidebar (Fixed w-96, No Scrollbars) */}
+          {/* Left Panel: Sidebar - Fixed width, hidden scrollbar */}
           <aside className="w-96 flex flex-col shrink-0 overflow-hidden">
             <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-2xl flex flex-col h-full shadow-sm">
               
-              {/* TOP: Equation & Visualizer */}
+              {/* TOP: Equation & Visualizer (Fixed) */}
               <div className="space-y-6 shrink-0">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
@@ -155,29 +152,9 @@ export default function LifLab() {
                     <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Governing Equation</span>
                   </div>
                   
-                  {/* Interactive Equation Box */}
-                  <div className="bg-black/30 rounded-xl p-4 flex flex-col items-center justify-center border border-zinc-800/30 min-h-[90px] relative">
-                    <div className="text-xl font-bold font-serif text-zinc-300">
-                      <span className="opacity-50 italic mr-1">τ</span>
-                      <span className="opacity-50">V&apos;</span>
-                      <span className="mx-2 text-zinc-600">=</span>
-                      <span className="text-zinc-500 mr-1">-</span>
-                      <span>(V - </span>
-                      <span 
-                        className={cn("cursor-help transition-all duration-200", hoveredTerm === 'E_L' ? "text-cyan-400 scale-110 font-black" : "text-cyan-500")}
-                        onMouseEnter={() => setHoveredTerm('E_L')} onMouseLeave={() => setHoveredTerm(null)}
-                      >E_L</span>
-                      <span>) + </span>
-                      <span 
-                        className={cn("cursor-help transition-all duration-200", hoveredTerm === 'R' ? "text-emerald-400 scale-110 font-black" : "text-emerald-500")}
-                        onMouseEnter={() => setHoveredTerm('R')} onMouseLeave={() => setHoveredTerm(null)}
-                      >R</span>
-                      <span className="mx-1">·</span>
-                      <span 
-                        className={cn("cursor-help transition-all duration-200", hoveredTerm === 'I' ? "text-amber-400 scale-110 font-black" : "text-amber-500")}
-                        onMouseEnter={() => setHoveredTerm('I')} onMouseLeave={() => setHoveredTerm(null)}
-                      >I(t)</span>
-                    </div>
+                  {/* LaTeX Equation Box */}
+                  <div className="bg-black/30 rounded-xl p-4 flex flex-col items-center justify-center border border-zinc-800/30 min-h-[90px] text-zinc-200">
+                    <BlockMath math="\tau \frac{dV}{dt} = -(V - E_L) + R \cdot I(t)" />
                     <div className="text-[10px] text-zinc-600 mt-2 pt-2 border-t border-zinc-800/30 w-full text-center font-mono">
                       <BlockMath math={getInputLatex()} />
                     </div>
@@ -190,7 +167,7 @@ export default function LifLab() {
                 </div>
               </div>
 
-              {/* MIDDLE: Controls (Scrollable internals, hidden scrollbar) */}
+              {/* MIDDLE: Controls (Scrollable with hidden scrollbar) */}
               <div className="mt-6 pt-6 border-t border-zinc-800/50 flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden space-y-6">
                   
                   {/* 1. Membrane Group */}
@@ -251,7 +228,7 @@ export default function LifLab() {
                           </Select>
                       </div>
 
-                      {/* Dynamic Sliders based on Input Mode - ALL ORIGINAL MODES PRESERVED */}
+                      {/* Dynamic Sliders based on Input Mode */}
                       <div className="space-y-3 px-1">
                           {params.inputMode === 'constant' && (
                                <div className="space-y-2">
@@ -306,7 +283,7 @@ export default function LifLab() {
                   </div>
               </div>
 
-              {/* BOTTOM: Status Footer */}
+              {/* BOTTOM: Status Footer (Fixed) */}
               <div className="mt-auto pt-6 border-t border-zinc-800/50 shrink-0">
                   <div className="flex items-center gap-2 mb-2 text-zinc-600">
                       <Info className="w-3.5 h-3.5" />
