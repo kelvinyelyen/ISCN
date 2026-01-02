@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from 'next/link';
 import { Slider } from "@/components/ui/slider";
-import { FunctionSquare, Compass, Timer } from "lucide-react";
+import { FunctionSquare, Compass, Timer, Anchor } from "lucide-react";
 import {
     Select,
     SelectContent,
@@ -17,40 +17,47 @@ import { getPhaseContent } from './content';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 
-// Updated Mode type based on your handwritten roadmap
+// Updated to match your "Whitebox" Phase 2 Roadmap
 type Mode = 'leak' | 'time-constant' | 'fixed-points' | 'spike';
 
 export default function PhasePlanePage() {
     const [mode, setMode] = useState<Mode>('leak');
-    const [paramI, setParamI] = useState(0.5);
-    // New state for Time Constant (tau) - crucial for Phase 2
-    const [tauValue, setTauValue] = useState(0.8); 
+    const [paramI, setParamI] = useState(0.5); // Input Current (I)
+    const [tau, setTau] = useState(1.0);       // Time Constant (tau)
     
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [mousePos, setMousePos] = useState<{ x: number, y: number } | null>(null);
     const [liveState, setLiveState] = useState<{ x: number, y: number, dx: number, dy: number } | null>(null);
 
-    // Fixed parameters for FitzHugh-Nagumo
+    // FHN Constants
     const a = 0.7;
     const b = 0.8;
 
+    // The Physics Engine: Updated with explicit Tau and Leak dynamics
     const getDerivatives = useCallback((x: number, y: number, p: number, m: Mode, t: number) => {
         switch (m) {
             case 'leak':
-                // The Leak (First order ODE): dV/dt = -V + I
-                return { dx: -x + p, dy: -y };
+                // 1st Order ODE: dV/dt = -(V - I)
+                // A simple decay toward the input I
+                return { dx: -(x - p), dy: -y }; 
+            
             case 'time-constant':
-                // Visualizing Tau: dV/dt = (-V + I) / tau
-                // Lower tau = faster reaction (larger vectors)
-                return { dx: (-x + p) / t, dy: -y / t };
+                // Visualizing Memory: dV/dt = (-V + I) / tau
+                // t (tau) scales the speed of the vector
+                return { dx: (-(x - p)) / t, dy: -y / t };
+
             case 'fixed-points':
-                // Standard 2D linear system to show equilibrium stability
-                return { dx: y, dy: -x - p * y };
+                // 2D Linear System for stability analysis
+                // Fixed point is at (0,0) usually, shifted here by p
+                return { dx: y, dy: -x - (0.5 * y) + p };
+
             case 'spike':
-                // FitzHugh-Nagumo: The fundamental spiking model
+                // FitzHugh-Nagumo
+                // Tau is usually small for V (fast) and large for w (slow)
+                // Here we simplify: dy is scaled by a small factor to make it slow
                 return {
                     dx: x - (x * x * x) / 3 - y + p,
-                    dy: t * (x + a - b * y)
+                    dy: 0.08 * (x + a - b * y) 
                 };
             default:
                 return { dx: 0, dy: 0 };
@@ -98,46 +105,69 @@ export default function PhasePlanePage() {
         ctx.fillStyle = "#09090b";
         ctx.fillRect(0, 0, width, height);
 
-        // Vector Field
-        ctx.strokeStyle = "rgba(113, 113, 122, 0.25)";
+        // 1. Draw Vector Field
         ctx.lineWidth = 1;
         for (let x = -6; x <= 6; x += 0.5) {
             for (let y = -4; y <= 4; y += 0.5) {
-                const { dx, dy } = getDerivatives(x, y, paramI, mode, tauValue);
+                const { dx, dy } = getDerivatives(x, y, paramI, mode, tau);
                 const speed = Math.sqrt(dx * dx + dy * dy);
-                const arrowScale = 0.2 / (speed + 0.5);
+                const arrowScale = 0.25 / (speed + 0.5); // Adjusted for visibility
                 const start = toCanvas(x, y);
                 const end = toCanvas(x + dx * arrowScale, y + dy * arrowScale);
+
+                // Dynamic coloring based on speed (Heatmap style)
+                const opacity = Math.min(0.8, speed * 0.3 + 0.1);
+                ctx.strokeStyle = `rgba(113, 113, 122, ${opacity})`;
 
                 ctx.beginPath();
                 ctx.moveTo(start.x, start.y);
                 ctx.lineTo(end.x, end.y);
                 ctx.stroke();
+                
+                // Arrowhead dot
                 ctx.beginPath();
                 ctx.arc(end.x, end.y, 1, 0, Math.PI * 2);
-                ctx.fillStyle = "rgba(113, 113, 122, 0.4)";
+                ctx.fillStyle = `rgba(113, 113, 122, ${opacity + 0.2})`;
                 ctx.fill();
             }
         }
 
-        // Fixed Points & Nullclines
+        // 2. Draw Nullclines & Fixed Points
         ctx.lineWidth = 2.5;
-        if (mode === 'leak' || mode === 'time-constant') {
-            // V-nullcline (Fixed point is at V=I)
-            ctx.strokeStyle = "#10b981";
-            ctx.beginPath();
-            ctx.moveTo(toCanvas(paramI, -4).x, toCanvas(paramI, -4).y);
-            ctx.lineTo(toCanvas(paramI, 4).x, toCanvas(paramI, 4).y);
-            ctx.stroke();
 
-            // Visualizing the Fixed Point Sink
-            const fp = toCanvas(paramI, 0);
+        if (mode === 'leak' || mode === 'time-constant') {
+            // The Leak: Target V = I
+            // Draw a vertical line representing the "Goal" voltage
+            ctx.strokeStyle = "#10b981"; // Green
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            const xTarget = toCanvas(paramI, 0).x;
+            ctx.moveTo(xTarget, 0);
+            ctx.lineTo(xTarget, height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw Fixed Point (Sink)
+            const sink = toCanvas(paramI, 0);
             ctx.fillStyle = "#10b981";
             ctx.beginPath();
-            ctx.arc(fp.x, fp.y, 6, 0, Math.PI * 2);
+            ctx.arc(sink.x, sink.y, 8, 0, Math.PI * 2);
             ctx.fill();
+            // Glow effect
+            ctx.fillStyle = "rgba(16, 185, 129, 0.2)";
+            ctx.beginPath();
+            ctx.arc(sink.x, sink.y, 16, 0, Math.PI * 2);
+            ctx.fill();
+
+        } else if (mode === 'fixed-points') {
+            // Show simple intersection
+             ctx.strokeStyle = "#3b82f6";
+             ctx.beginPath();
+             ctx.moveTo(toCanvas(-6, 0).x, toCanvas(-6, 0).y);
+             ctx.lineTo(toCanvas(6, 0).x, toCanvas(6, 0).y);
+             ctx.stroke();
         } else if (mode === 'spike') {
-            // Cubic Nullcline
+            // Cubic Nullcline (V-nullcline)
             ctx.strokeStyle = "#10b981";
             ctx.beginPath();
             for (let v = -4; v <= 4; v += 0.05) {
@@ -148,18 +178,18 @@ export default function PhasePlanePage() {
             }
             ctx.stroke();
 
-            // Linear Recovery Nullcline
-            ctx.strokeStyle = "#f59e0b";
+            // Linear Nullcline (w-nullcline)
+            ctx.strokeStyle = "#f59e0b"; // Amber
             ctx.beginPath();
             ctx.moveTo(toCanvas(-4, (-4 + a) / b).x, toCanvas(-4, (-4 + a) / b).y);
             ctx.lineTo(toCanvas(4, (4 + a) / b).x, toCanvas(4, (4 + a) / b).y);
             ctx.stroke();
         }
 
-        // Live Trajectory Probe
+        // 3. Live Probe Trajectory
         if (mousePos) {
             const start = fromCanvas(mousePos.x, mousePos.y);
-            const { dx, dy } = getDerivatives(start.x, start.y, paramI, mode, tauValue);
+            const { dx, dy } = getDerivatives(start.x, start.y, paramI, mode, tau);
             setLiveState({ x: start.x, y: start.y, dx, dy });
 
             ctx.strokeStyle = mode === 'spike' ? "#10b981" : "#3b82f6";
@@ -169,8 +199,9 @@ export default function PhasePlanePage() {
             let cur = { ...start };
             ctx.moveTo(mousePos.x, mousePos.y);
             
-            for (let i = 0; i < 400; i++) {
-                cur = rk4Step(cur.x, cur.y, paramI, mode, tauValue, 0.03);
+            // Integrate forward
+            for (let i = 0; i < 500; i++) {
+                cur = rk4Step(cur.x, cur.y, paramI, mode, tau, 0.03); // Fixed dt for drawing
                 const p = toCanvas(cur.x, cur.y);
                 ctx.lineTo(p.x, p.y);
                 if (p.x < 0 || p.x > width || p.y < 0 || p.y > height) break;
@@ -179,7 +210,7 @@ export default function PhasePlanePage() {
             ctx.setLineDash([]);
         }
 
-    }, [paramI, tauValue, mousePos, mode, getDerivatives, rk4Step]);
+    }, [paramI, tau, mousePos, mode, getDerivatives, rk4Step, a, b]);
 
     const handleMouseMove = (e: React.MouseEvent) => {
         const canvas = canvasRef.current;
@@ -191,31 +222,31 @@ export default function PhasePlanePage() {
     const getLabels = (m: Mode) => {
         switch (m) {
             case 'leak': return {
-                header: "Passive Membrane",
-                xAxis: "Voltage (V)", yAxis: "y", param: "Input Current (I)",
-                desc: "The Leak: Voltage always relaxes to the input equilibrium.",
-                eq: "\\dot{V} = -(V - I)",
+                header: "The Leak (1st Order ODE)",
+                xAxis: "Voltage (V)", yAxis: "Aux", param: "Input Current (I)",
+                desc: "The fundamental unit of neural dynamics. Voltage always decays toward the resting state (or input level).",
+                eq: "\\frac{dV}{dt} = -(V - I)",
                 color: "purple"
             };
             case 'time-constant': return {
                 header: "Time Constant (τ)",
-                xAxis: "Voltage (V)", yAxis: "y", param: "Input Current (I)",
-                desc: "The Neuron's Memory: Adjust τ to change the speed of decay.",
-                eq: "\\tau\\dot{V} = -V + I",
+                xAxis: "Voltage (V)", yAxis: "Aux", param: "Input Current (I)",
+                desc: "Tau represents 'Memory'. A high τ means the neuron reacts slowly; a low τ means it reacts instantly.",
+                eq: "\\tau \\frac{dV}{dt} = -(V - I)",
                 color: "blue"
             };
             case 'fixed-points': return {
-                header: "Equilibrium & Stability",
-                xAxis: "x", yAxis: "y", param: "Damping (δ)",
-                desc: "Observe how trajectories roll into the stable sink (Fixed Point).",
-                eq: "\\dot{y} = -x - \\delta y",
+                header: "Fixed Points & Equilibrium",
+                xAxis: "State x", yAxis: "State y", param: "Shift",
+                desc: "The 'Sink' is where the system wants to settle. Stability is determined by the flow of the vector field.",
+                eq: "\\vec{v} \\to \\vec{0}",
                 color: "cyan"
             };
             case 'spike': return {
-                header: "FitzHugh-Nagumo Spike",
+                header: "Phase Plane: The Spike",
                 xAxis: "Voltage (V)", yAxis: "Recovery (w)", param: "Applied Current (I)",
-                desc: "Phase Plane: Spiking occurs when the fixed point becomes unstable.",
-                eq: "\\dot{V} = V - \\frac{V^3}{3} - w + I",
+                desc: "Visualizing the Limit Cycle. When I > threshold, the stable fixed point disappears, creating a spike.",
+                eq: "\\dot{V} = V - V^3/3 - w + I",
                 color: "emerald"
             };
         }
@@ -245,7 +276,7 @@ export default function PhasePlanePage() {
                             <SelectItem value="leak">1. The Leak</SelectItem>
                             <SelectItem value="time-constant">2. Time Constant (τ)</SelectItem>
                             <SelectItem value="fixed-points">3. Fixed Points</SelectItem>
-                            <SelectItem value="spike">4. The Spike</SelectItem>
+                            <SelectItem value="spike">4. Phase Plane</SelectItem>
                         </SelectContent>
                     </Select>
                     <ConceptDialog {...content} />
@@ -255,6 +286,8 @@ export default function PhasePlanePage() {
             <main className="flex-1 flex overflow-hidden p-8 gap-8">
                 <aside className="w-80 flex flex-col gap-6 shrink-0">
                     <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-2xl space-y-8 flex flex-col shadow-sm">
+                        
+                        {/* Math Block */}
                         <div className="space-y-4">
                             <div className="flex items-center gap-2">
                                 <FunctionSquare className="w-3.5 h-3.5 text-zinc-600" />
@@ -265,7 +298,7 @@ export default function PhasePlanePage() {
                             </div>
                         </div>
 
-                        {/* Parameter I Slider */}
+                        {/* Input Current Slider */}
                         <div className="space-y-4">
                             <div className="flex justify-between items-center">
                                 <label className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 font-mono">{labels.param}</label>
@@ -276,42 +309,46 @@ export default function PhasePlanePage() {
                                 onValueChange={(val) => setParamI(val[0])}
                                 className={cn("py-2", mode === 'spike' ? "[&_[role=slider]]:bg-emerald-500" : "[&_[role=slider]]:bg-blue-500")}
                             />
+                            <p className="text-xs text-zinc-500 leading-relaxed italic">{labels.desc}</p>
                         </div>
 
-                        {/* Time Constant Slider - Conditional for Lab 2 & 4 */}
-                        {(mode === 'time-constant' || mode === 'spike') && (
-                            <div className="space-y-4 pt-4 border-t border-zinc-800/50">
+                        {/* Time Constant Slider - Only visible in relevant modes */}
+                        {(mode === 'time-constant' || mode === 'leak') && (
+                            <div className="space-y-4 pt-4 border-t border-zinc-800/50 animate-in fade-in slide-in-from-top-2">
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center gap-2">
-                                        <Timer className="w-3 h-3 text-zinc-500" />
+                                        <Timer className="w-4 h-4 text-zinc-500" />
                                         <label className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 font-mono">Time Constant (τ)</label>
                                     </div>
-                                    <span className="text-base font-bold font-mono text-white">{tauValue.toFixed(2)}</span>
+                                    <span className="text-base font-bold font-mono text-white">{tau.toFixed(2)}</span>
                                 </div>
                                 <Slider
-                                    value={[tauValue]} min={0.01} max={2.0} step={0.01}
-                                    onValueChange={(val) => setTauValue(val[0])}
+                                    value={[tau]} min={0.1} max={3.0} step={0.1}
+                                    onValueChange={(val) => setTau(val[0])}
                                     className="py-2 [&_[role=slider]]:bg-white"
                                 />
-                                <p className="text-[10px] text-zinc-500 italic">Adjusts how fast the system evolves.</p>
+                                <p className="text-[10px] text-zinc-500 italic">Controls the "sluggishness" of the system.</p>
                             </div>
                         )}
 
                         <div className="pt-6 border-t border-zinc-800/50 space-y-3">
-                            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Phase Portrait Probe</span>
+                            <div className="flex items-center gap-2">
+                                <Anchor className="w-3.5 h-3.5 text-zinc-600" />
+                                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Trajectory Probe</span>
+                            </div>
                             <div className="text-sm font-bold font-mono text-white bg-zinc-950 p-4 rounded-xl border border-zinc-800 flex flex-col gap-2">
                                 {liveState ? (
                                     <>
                                         <div className="flex justify-between opacity-60 text-[10px]">
                                             <span>POS: ({liveState.x.toFixed(2)}, {liveState.y.toFixed(2)})</span>
-                                            <span className="animate-pulse text-emerald-500 uppercase">Vector Active</span>
+                                            <span className="animate-pulse text-emerald-500 uppercase">Active</span>
                                         </div>
                                         <div className="text-center pt-2 border-t border-zinc-800">
-                                            <InlineMath math={`\\vec{V} = [${liveState.dx.toFixed(2)}, ${liveState.dy.toFixed(2)}]`} />
+                                            <InlineMath math={`\\dot{\\vec{x}} = [${liveState.dx.toFixed(2)}, ${liveState.dy.toFixed(2)}]`} />
                                         </div>
                                     </>
                                 ) : (
-                                    <div className="text-zinc-600 text-center py-2 italic text-xs">Hover to see flow...</div>
+                                    <div className="text-zinc-600 text-center py-2 italic text-xs">Hover canvas to probe...</div>
                                 )}
                             </div>
                         </div>
