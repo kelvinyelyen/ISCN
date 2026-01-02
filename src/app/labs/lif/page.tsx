@@ -146,7 +146,7 @@ export default function LifLab() {
             <h1 className="text-lg font-semibold tracking-tight text-white">
               <Link href="/" className="hover:opacity-80 transition-opacity">ISCN</Link>
               <span className="mx-3 text-zinc-700">/</span>
-              <span className="text-zinc-400 font-medium">Phase 1: LIF Synthesis</span>
+              <span className="text-zinc-400 font-medium">LIF Synthesis</span>
             </h1>
           </div>
           <div className="flex items-center gap-4">
@@ -255,7 +255,7 @@ export default function LifLab() {
                                 <SelectTrigger className="w-28 bg-zinc-950 border-zinc-800 h-6 text-[10px] text-white focus:ring-0 outline-none hover:bg-zinc-900 transition-colors">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-zinc-900 border-zinc-800">
+                                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
                                     <SelectItem value="constant">Constant</SelectItem>
                                     <SelectItem value="pulse">Pulse</SelectItem>
                                     <SelectItem value="noise">Noise</SelectItem>
@@ -336,7 +336,7 @@ export default function LifLab() {
             {/* Dashboard Overlay */}
             <div className="absolute top-6 left-6 z-10 pointer-events-none select-none">
               <div className="flex flex-col">
-                <span className="text-5xl font-black text-zinc-800/50 font-mono tracking-tighter uppercase">
+                <span className="text-3xl font-black text-zinc-800/50 font-mono tracking-tighter uppercase">
                   {params.inputMode}
                 </span>
                 <div className="flex items-center gap-2 mt-2">
