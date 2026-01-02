@@ -61,8 +61,8 @@ export default function LinearAlgebraPage() {
                             <SelectValue placeholder="Context" />
                         </SelectTrigger>
                         <SelectContent className="bg-zinc-900 border-zinc-800">
-                            <SelectItem value="math">Math (Dot Product)</SelectItem>
-                            <SelectItem value="neuron">Neuron (Vector)</SelectItem>
+                            <SelectItem value="math">Math</SelectItem>
+                            <SelectItem value="neuron">Integration (Dot Product)</SelectItem>
                         </SelectContent>
                     </Select>
                     <ConceptDialog {...content} />
@@ -93,7 +93,7 @@ export default function LinearAlgebraPage() {
                         </div>
 
                         {/* Sliders Section - Compacted */}
-                        <div className="mt-4 pt-8 border-t border-zinc-800/50 flex-1 space-y-6 overflow-hidden">
+                        <div className="mt-8 pt-4 border-t border-zinc-800/50 flex-1 space-y-3 overflow-hidden">
                             <div className="space-y-1">
                                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">
                                     {mode === 'neuron' ? "Synaptic Weights" : "Vector Components"}
