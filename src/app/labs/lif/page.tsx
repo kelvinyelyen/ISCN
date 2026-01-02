@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useSimulationStore } from '@/store/simulation';
 import { ForceBalance } from '@/components/viz/ForceBalance';
