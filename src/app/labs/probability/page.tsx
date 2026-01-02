@@ -91,16 +91,57 @@ export default function ProbabilityPage() {
                     const outcome = Math.random() < rate ? 1 : 0;
                     coinHistoryRef.current = [...coinHistoryRef.current, outcome].slice(-200);
                 }
+
                 const history = coinHistoryRef.current;
+                const coinSize = 10;
+                const streamY = 80;
+                
+                // Draw Coin Stream
                 history.forEach((outcome, i) => {
                     const ageIndex = (history.length - 1) - i;
                     const x = canvas.width - 50 - (ageIndex * 15);
                     if (x < 0) return;
                     ctx.beginPath();
-                    ctx.arc(x, 100, 5, 0, Math.PI * 2);
+                    ctx.arc(x, streamY, coinSize / 2, 0, Math.PI * 2);
                     ctx.fillStyle = outcome === 1 ? "#10b981" : "#ef4444";
                     ctx.fill();
                 });
+
+                // Stats Bars
+                const heads = history.filter(c => c === 1).length;
+                const total = history.length || 1;
+                const barWidth = 60;
+                const maxH = 150;
+                const bottomY = canvas.height - 60;
+
+                ctx.font = "12px ui-monospace, monospace";
+                
+                // Closed Bar
+                const hTails = ((total - heads) / total) * maxH;
+                ctx.fillStyle = "#ef4444";
+                ctx.fillRect(canvas.width / 4 - barWidth / 2, bottomY - hTails, barWidth, hTails);
+                ctx.fillStyle = "#fff";
+                ctx.fillText(`0 (Closed): ${((total - heads) / total).toFixed(2)}`, canvas.width / 4 - 40, bottomY + 25);
+
+                // Open Bar
+                const hHeads = (heads / total) * maxH;
+                ctx.fillStyle = "#10b981";
+                ctx.fillRect(3 * canvas.width / 4 - barWidth / 2, bottomY - hHeads, barWidth, hHeads);
+                ctx.fillStyle = "#fff";
+                ctx.fillText(`1 (Open): ${(heads / total).toFixed(2)}`, 3 * canvas.width / 4 - 35, bottomY + 25);
+
+                // Target Line
+                const targetY = bottomY - (rate * maxH);
+                ctx.strokeStyle = "#fbbf24";
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(canvas.width / 2 - 100, targetY);
+                ctx.lineTo(canvas.width / 2 + 100, targetY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = "#fbbf24";
+                ctx.fillText(`p=${rate.toFixed(2)}`, canvas.width / 2 - 20, targetY - 10);
+
             } else {
                 const realRate = 5 + (rate * 45); 
                 if (Math.random() < realRate * dt) {
@@ -108,17 +149,57 @@ export default function ProbabilityPage() {
                     spikeTimesRef.current = spikeTimesRef.current.filter(t => t >= now - 5.0);
                 }
                 const spikes = spikeTimesRef.current;
+                
+                // Raster Plot
                 ctx.strokeStyle = "#a855f7"; 
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 spikes.forEach(t => {
                     const x = canvas.width - 50 - ((now - t) * 150);
                     if (x > 0 && x < canvas.width) {
-                        ctx.moveTo(x, 65);
-                        ctx.lineTo(x, 95);
+                        ctx.moveTo(x, 50);
+                        ctx.lineTo(x, 90);
                     }
                 });
                 ctx.stroke();
+
+                // ISI Histogram
+                const isis: number[] = [];
+                for (let i = 1; i < spikes.length; i++) {
+                    isis.push(spikes[i] - spikes[i - 1]);
+                }
+
+                if (isis.length > 2) {
+                    const maxIsi = 0.2;
+                    const binCount = 30;
+                    const bins = new Array(binCount).fill(0);
+                    isis.forEach(v => {
+                        const idx = Math.floor(v / (maxIsi / binCount));
+                        if (idx < binCount) bins[idx]++;
+                    });
+
+                    const histX = 80;
+                    const histBottom = canvas.height - 60;
+                    const histW = canvas.width - 160;
+                    const histH = 150;
+                    const maxB = Math.max(...bins, 1);
+
+                    ctx.fillStyle = "rgba(168, 85, 247, 0.2)";
+                    bins.forEach((b, i) => {
+                        const h = (b / maxB) * histH;
+                        ctx.fillRect(histX + (i * (histW / binCount)), histBottom - h, (histW / binCount) - 2, h);
+                    });
+
+                    // Theory Curve
+                    ctx.beginPath();
+                    ctx.strokeStyle = "#0ed3cf";
+                    for (let x = 0; x < histW; x++) {
+                        const t = (x / histW) * maxIsi;
+                        const val = Math.exp(-realRate * t);
+                        ctx.lineTo(histX + x, histBottom - (val * histH));
+                    }
+                    ctx.stroke();
+                }
             }
 
             if (now - lastUiUpdateRef.current > 0.1) {
@@ -138,7 +219,7 @@ export default function ProbabilityPage() {
     }, [mode, rate]);
 
     return (
-        <div className="h-screen bg-zinc-950 text-zinc-200 flex flex-col overflow-hidden">
+        <div className="h-screen bg-zinc-950 text-zinc-200 flex flex-col overflow-hidden select-none">
             <header className="h-14 border-b border-zinc-900 flex items-center justify-between px-6 bg-zinc-950/80 backdrop-blur-sm z-10 shrink-0">
                 <div className="flex items-center gap-4">
                     <Activity className={cn("w-5 h-5", mode === 'coin' ? "text-emerald-500" : "text-purple-500")} />
@@ -154,27 +235,23 @@ export default function ProbabilityPage() {
                         <SelectTrigger className="w-[180px] h-9 bg-zinc-900 border-zinc-800 text-sm text-zinc-200 focus:ring-0">
                             <SelectValue placeholder="Mode" />
                         </SelectTrigger>
-                        <SelectContent className="bg-zinc-900 border-zinc-800">
-                            <SelectItem value="coin" className="text-white focus:text-white focus:bg-zinc-800 cursor-pointer">
-                                Bernoulli (Coin)
-                            </SelectItem>
-                            <SelectItem value="poisson" className="text-white focus:text-white focus:bg-zinc-800 cursor-pointer">
-                                Poisson (Spikes)
-                            </SelectItem>
+                        <SelectContent className="bg-zinc-900 border-zinc-800 border-white/5 shadow-2xl">
+                            <SelectItem value="coin" className="text-white hover:bg-zinc-800 cursor-pointer">Bernoulli (Coin)</SelectItem>
+                            <SelectItem value="poisson" className="text-white hover:bg-zinc-800 cursor-pointer">Poisson (Spikes)</SelectItem>
                         </SelectContent>
                     </Select>
                     <ConceptDialog title={guideContent.title} subtitle={guideContent.subtitle} sections={guideContent.sections} />
                 </div>
             </header>
 
-            <main className="flex-1 flex overflow-hidden p-8 gap-8">
-                {/* Left Panel: Controls */}
+            <main className="flex-1 flex overflow-hidden p-8 gap-10">
+                {/* Left Panel: Control Box */}
                 <aside className="w-80 flex flex-col gap-6 shrink-0">
-                    <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-2xl space-y-8 flex flex-col shadow-xl">
+                    <div className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl space-y-8 flex flex-col shadow-lg backdrop-blur-sm">
                         <div className="space-y-4">
                             <div className="flex justify-between items-center">
-                                <label className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500">{labels.param}</label>
-                                <span className={cn("text-base font-bold tabular-nums", labels.color)}>{rate.toFixed(2)}</span>
+                                <label className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 font-mono">{labels.param}</label>
+                                <span className={cn("text-base font-bold font-mono", labels.color)}>{rate.toFixed(2)}</span>
                             </div>
                             <Slider
                                 value={[rate]} min={0.01} max={0.99} step={0.01}
@@ -184,42 +261,40 @@ export default function ProbabilityPage() {
                             <p className="text-xs text-zinc-500 leading-relaxed italic">{labels.desc}</p>
                         </div>
 
-                        {/* KaTeX Formula Display */}
-                        <div className="pt-6 border-t border-zinc-800/50 space-y-3">
+                        <div className="pt-6 border-t border-zinc-800/50 space-y-4">
                             <div className="flex items-center gap-2">
                                 <FunctionSquare className="w-3.5 h-3.5 text-zinc-600" />
-                                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600">Model Formula</span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Model Formula</span>
                             </div>
-                            <div className="bg-black/30 rounded-xl p-4 flex items-center justify-center border border-zinc-800/30 min-h-[80px]">
-                                <div className="text-white">
-                                    <BlockMath math={labels.formula} />
-                                </div>
+                            <div className="bg-black/30 rounded-xl p-4 flex items-center justify-center border border-zinc-800/30 min-h-[100px] text-white">
+                                <BlockMath math={labels.formula} />
                             </div>
                         </div>
 
                         <div className="pt-6 border-t border-zinc-800/50 space-y-3">
-                            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600">Live Statistics</span>
-                            <div className="text-sm font-medium text-white tabular-nums bg-zinc-950 p-3 rounded-xl border border-zinc-800 text-center">
+                            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Live Statistics</span>
+                            <div className="text-sm font-bold font-mono text-white bg-zinc-950 p-3 rounded-xl border border-zinc-800 text-center tracking-tighter">
                                 {labels.live()}
                             </div>
                         </div>
                     </div>
                 </aside>
 
-                {/* Right Panel: Visualization */}
-                <section className="flex-1 min-w-0 bg-zinc-900/30 border border-zinc-800 rounded-3xl overflow-hidden flex flex-col relative shadow-inner">
+                {/* Right Panel: Large Visualization Box */}
+                <section className="flex-1 min-w-0 bg-zinc-900/20 border border-zinc-800 rounded-[2rem] overflow-hidden flex flex-col relative shadow-inner backdrop-blur-sm">
                     <div className="flex-1 flex items-center justify-center p-6">
                         <div className="w-full max-w-4xl relative group">
-                             <div className={cn("absolute -inset-1 rounded-xl blur-lg opacity-10 transition duration-1000", mode === 'coin' ? "bg-emerald-500" : "bg-purple-500")} />
-                            <canvas ref={canvasRef} width={800} height={400} className="relative w-full h-auto bg-zinc-950 rounded-xl shadow-2xl border border-zinc-800" />
+                            <div className={cn("absolute -inset-2 rounded-2xl blur-2xl opacity-5 transition duration-1000", mode === 'coin' ? "bg-emerald-500" : "bg-purple-500")} />
+                            <canvas ref={canvasRef} width={800} height={400} className="relative w-full h-auto bg-zinc-950 rounded-2xl shadow-2xl border border-zinc-800/50" />
                         </div>
                     </div>
-                    <div className="p-4 px-8 border-t border-zinc-800/50 flex justify-between items-center bg-zinc-900/40">
+                    
+                    <div className="p-4 px-8 border-t border-zinc-800/50 flex justify-between items-center bg-zinc-950/50">
                         <div className="flex items-center gap-2">
                             <div className={cn("w-1.5 h-1.5 rounded-full", mode === 'coin' ? "bg-emerald-500" : "bg-purple-500")} />
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">{mode === 'coin' ? "Bernoulli Engine" : "Poisson Engine"}</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 font-mono">{mode === 'coin' ? "Bernoulli Engine" : "Poisson Engine"}</span>
                         </div>
-                        <span className="text-[10px] text-zinc-700 uppercase tracking-widest">Simulation Hz: 60</span>
+                        <span className="text-[10px] text-zinc-700 uppercase tracking-widest font-mono">Sim_Buffer: 800x400_active</span>
                     </div>
                 </section>
             </main>
