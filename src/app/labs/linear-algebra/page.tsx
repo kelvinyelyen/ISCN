@@ -93,11 +93,16 @@ export default function LinearAlgebraPage() {
                         </div>
 
                         {/* Sliders Section - Compacted */}
-                        <div className="mt-8 pt-8 border-t border-zinc-800/50 flex-1 space-y-6 overflow-hidden">
+                        <div className="mt-4 pt-8 border-t border-zinc-800/50 flex-1 space-y-6 overflow-hidden">
                             <div className="space-y-1">
                                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">
                                     {mode === 'neuron' ? "Synaptic Weights" : "Vector Components"}
                                 </span>
+                                <p className="text-[11px] text-zinc-500 leading-tight">
+                                    {mode === 'neuron' 
+                                        ? "Adjust synaptic strength: positive for excitation (Glutamate), negative for inhibition (GABA)." 
+                                        : "Modify the weighting vector to change how the system filters incoming signals."}
+                                </p>
                             </div>
 
                             <div className="space-y-5">
