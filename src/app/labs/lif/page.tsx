@@ -31,16 +31,20 @@ import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipCont
 import { cn } from '@/lib/utils';
 import { InputMode } from '@/lib/physics/lif';
 
-// Define the data shape for Type Safety
+// Type Safety for Tooltip Data
 interface DataPoint {
     time: number;
     voltage: number;
     input?: number;
 }
 
-const CustomTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
-    if (active && payload && payload.length) {
-        const data = payload[0].payload as DataPoint;
+/**
+ * Custom Tooltip component for the oscilloscope.
+ * Passing props directly (instead of destructuring) allows TS to narrow the payload type correctly.
+ */
+const CustomTooltip = (props: TooltipProps<ValueType, NameType>) => {
+    if (props.active && props.payload && props.payload.length) {
+        const data = props.payload[0].payload as DataPoint;
         return (
             <div className="bg-zinc-900 border border-zinc-800 p-2 rounded shadow-xl text-[10px] font-mono z-50 backdrop-blur-md bg-opacity-90">
                 <div className="text-zinc-500 mb-1">{`Time: ${data.time.toFixed(1)} ms`}</div>
@@ -66,6 +70,7 @@ export default function LifLab() {
 
     const animate = useCallback(() => {
         if (isRunning) {
+            // Step twice per frame for smoother visual flow
             step(); step();
         }
         requestRef.current = requestAnimationFrame(animate);
@@ -96,7 +101,7 @@ export default function LifLab() {
     return (
         <div className="h-screen bg-zinc-950 text-zinc-200 flex flex-col overflow-hidden select-none font-sans">
             
-            {/* Header */}
+            {/* Professional Workstation Header */}
             <header className="h-14 border-b border-zinc-900 flex items-center justify-between px-6 bg-zinc-950 shrink-0">
                 <div className="flex items-center gap-4">
                     <Activity className="w-5 h-5 text-emerald-500" />
@@ -129,11 +134,11 @@ export default function LifLab() {
 
             <main className="flex-1 flex overflow-hidden p-8 gap-8">
                 
-                {/* Left Panel: Controls */}
+                {/* Control Sidebar Card */}
                 <aside className="w-80 flex flex-col gap-6 shrink-0">
                     <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-2xl space-y-8 flex flex-col shadow-sm">
                         
-                        {/* Equation Box */}
+                        {/* Governing Equation Display */}
                         <div className="space-y-4">
                             <div className="flex items-center gap-2">
                                 <FunctionSquare className="w-3.5 h-3.5 text-zinc-600" />
@@ -154,7 +159,7 @@ export default function LifLab() {
                             </div>
                         </div>
 
-                        {/* Sliders Area */}
+                        {/* Interactive Sliders */}
                         <div className="space-y-6 pt-2 overflow-y-auto pr-1 scrollbar-hide">
                             <div className="space-y-4">
                                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Biophysics</span>
@@ -186,7 +191,7 @@ export default function LifLab() {
                                 </div>
                             </div>
 
-                            {/* Input Stimulus */}
+                            {/* Stimulus Input Controls */}
                             <div className="pt-6 border-t border-zinc-800/50 space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Stimulus</span>
@@ -217,15 +222,17 @@ export default function LifLab() {
                             </div>
                         </div>
 
+                        {/* Current/Force Balance Visualization */}
                         <div className="pt-2">
                              <ForceBalance />
                         </div>
                     </div>
                 </aside>
 
-                {/* Right Panel: Oscilloscope Workstation */}
+                {/* Main Workstation: Oscilloscope Panel */}
                 <section className="flex-1 min-w-0 bg-zinc-900/30 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col relative shadow-inner">
                     
+                    {/* Ghost Trace Controls Overlay */}
                     {ghostTrace && (
                         <div className="absolute top-4 right-4 z-20">
                             <Button 
@@ -237,6 +244,7 @@ export default function LifLab() {
                         </div>
                     )}
 
+                    {/* Chart Area */}
                     <div className="flex-1 relative p-4">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={history} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -263,7 +271,7 @@ export default function LifLab() {
                         </ResponsiveContainer>
                     </div>
 
-                    {/* Workstation Footer */}
+                    {/* Workstation Technical Footer */}
                     <div className="p-4 px-10 border-t border-zinc-800/50 flex justify-between items-center bg-zinc-950/50">
                         <div className="flex items-center gap-3">
                             <div className={cn("w-2 h-2 rounded-full", isRunning ? "bg-emerald-500 animate-pulse" : "bg-zinc-600")} />
@@ -273,7 +281,7 @@ export default function LifLab() {
                         </div>
                         <div className="flex gap-6">
                             <span className="text-[10px] text-zinc-700 uppercase tracking-widest font-mono">{`Mode: ${params.inputMode}`}</span>
-                            <span className="text-[10px] text-zinc-700 uppercase tracking-widest font-mono">Engine: LIF_V2</span>
+                            <span className="text-[10px] text-zinc-700 uppercase tracking-widest font-mono">Engine: LIF_CORE_V2</span>
                         </div>
                     </div>
                 </section>
