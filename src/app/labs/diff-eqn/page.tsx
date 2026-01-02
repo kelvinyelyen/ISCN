@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from 'next/link';
 import { Slider } from "@/components/ui/slider";
-import { Activity } from "lucide-react";
+import { Activity, FunctionSquare, Compass } from "lucide-react";
 import {
     Select,
     SelectContent,
@@ -15,9 +15,7 @@ import { cn } from "@/lib/utils";
 import { ConceptDialog } from '@/components/guide/ConceptDialog';
 import { getPhaseContent } from './content';
 import { InlineMath, BlockMath } from 'react-katex';
-
-
-
+import 'katex/dist/katex.min.css';
 
 type Mode = 'math' | 'leak' | 'resonator' | 'spike';
 
@@ -28,36 +26,19 @@ export default function PhasePlanePage() {
     const [mousePos, setMousePos] = useState<{ x: number, y: number } | null>(null);
     const [liveState, setLiveState] = useState<{ x: number, y: number, dx: number, dy: number } | null>(null);
 
-    // Constants & Scale
-    const getScale = () => {
-        return 100; // Consistent zoom for all neuro modes
-    };
-    const getOffset = () => {
-        return { x: 500, y: 375 }; // Centered
-    };
-
     // FHN Constants (Spike)
     const a = 0.7;
     const b = 0.8;
     const tau = 0.08;
 
-    // Re-defined here to be accessible for both render and calculation
     const getDerivatives = (x: number, y: number, p: number, m: Mode) => {
         if (m === 'leak') {
-            // Linear Leak: dx/dt = -x + I, dy/dt = -y (fast decay)
             return { dx: -x + p, dy: -y };
         } else if (m === 'resonator') {
-            // Harmonic: Damped Oscillator
-            const damping = Math.max(0, p); // parameter acts as damping
+            const damping = Math.max(0, p);
             return { dx: y, dy: -x - damping * y };
-        } else if (m === 'spike') {
-            // FHN
-            return {
-                dx: x - (x * x * x) / 3 - y + p,
-                dy: tau * (x + a - b * y)
-            };
         } else {
-            // 'math' - Generic Cubic
+            // 'spike' & 'math' (FHN)
             return {
                 dx: x - (x * x * x) / 3 - y + p,
                 dy: tau * (x + a - b * y)
@@ -65,184 +46,140 @@ export default function PhasePlanePage() {
         }
     };
 
+    // RK4 Integration for high-quality trajectories
+    const rk4Step = (x: number, y: number, p: number, m: Mode, dt: number) => {
+        const k1 = getDerivatives(x, y, p, m);
+        const k2 = getDerivatives(x + k1.dx * dt / 2, y + k1.dy * dt / 2, p, m);
+        const k3 = getDerivatives(x + k2.dx * dt / 2, y + k2.dy * dt / 2, p, m);
+        const k4 = getDerivatives(x + k3.dx * dt, y + k3.dy * dt, p, m);
+        return {
+            x: x + (dt / 6) * (k1.dx + 2 * k2.dx + 2 * k3.dx + k4.dx),
+            y: y + (dt / 6) * (k1.dy + 2 * k2.dy + 2 * k3.dy + k4.dy)
+        };
+    };
+
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext("2d");
+        const ctx = canvas.getContext("2d", { alpha: false });
         if (!ctx) return;
 
-        const toCanvas = (x: number, y: number) => {
-            const s = getScale();
-            const o = getOffset();
-            return {
-                x: o.x + x * s,
-                y: o.y - y * s
-            };
-        };
+        // High-DPI Scaling logic
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
 
-        const fromCanvas = (cx: number, cy: number) => {
-            const s = getScale();
-            const o = getOffset();
-            return {
-                x: (cx - o.x) / s,
-                y: (o.y - cy) / s
-            };
-        }; ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const width = rect.width;
+        const height = rect.height;
+        const scale = 80; // Adjusted zoom
+        const offset = { x: width / 2, y: height / 2 };
 
-        // Draw Grid/Arrows
-        // Draw Grid/Arrows
-        ctx.strokeStyle = "rgba(82, 82, 91, 0.4)";
-        ctx.fillStyle = "rgba(82, 82, 91, 0.6)";
+        const toCanvas = (x: number, y: number) => ({
+            x: offset.x + x * scale,
+            y: offset.y - y * scale
+        });
 
-        const rangeX = { min: -5.0, max: 5.0, step: 0.5 };
-        const rangeY = { min: -4.0, max: 4.0, step: 0.5 };
+        const fromCanvas = (cx: number, cy: number) => ({
+            x: (cx - offset.x) / scale,
+            y: (offset.y - cy) / scale
+        });
 
-        for (let x = rangeX.min; x <= rangeX.max; x += rangeX.step) {
-            for (let y = rangeY.min; y <= rangeY.max; y += rangeY.step) {
+        ctx.fillStyle = "#09090b";
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw Vector Field
+        ctx.strokeStyle = "rgba(113, 113, 122, 0.25)";
+        ctx.lineWidth = 1;
+        for (let x = -6; x <= 6; x += 0.5) {
+            for (let y = -4; y <= 4; y += 0.5) {
                 const { dx, dy } = getDerivatives(x, y, paramI, mode);
                 const speed = Math.sqrt(dx * dx + dy * dy);
-                if (speed < 0.01) continue;
-
-                // Dynamic arrow scaling helps visualization
-                const arrowScale = 0.3 / (speed * 0.5 + 0.5);
-                const drawDx = dx * arrowScale;
-                const drawDy = dy * arrowScale;
+                const arrowScale = 0.2 / (speed + 0.5);
                 const start = toCanvas(x, y);
-                const end = toCanvas(x + drawDx, y + drawDy);
+                const end = toCanvas(x + dx * arrowScale, y + dy * arrowScale);
 
                 ctx.beginPath();
                 ctx.moveTo(start.x, start.y);
                 ctx.lineTo(end.x, end.y);
                 ctx.stroke();
-
                 ctx.beginPath();
-                ctx.arc(end.x, end.y, 1.5, 0, Math.PI * 2);
+                ctx.arc(end.x, end.y, 1, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(113, 113, 122, 0.4)";
                 ctx.fill();
             }
         }
 
-        // Nullclines
-        ctx.lineWidth = 2;
-
+        // Draw Nullclines with high quality
+        ctx.lineWidth = 2.5;
         if (mode === 'leak') {
-            // x-nullcline: -x + p = 0 => x = p (Vertical line)
-            ctx.strokeStyle = "#10b981";
+            ctx.strokeStyle = "#10b981"; // V-nullcline
             ctx.beginPath();
-            const xVal = paramI;
-            ctx.moveTo(toCanvas(xVal, -4).x, toCanvas(xVal, -4).y);
-            ctx.lineTo(toCanvas(xVal, 4).x, toCanvas(xVal, 4).y);
+            const xLine = toCanvas(paramI, -4);
+            ctx.moveTo(xLine.x, toCanvas(paramI, -4).y);
+            ctx.lineTo(xLine.x, toCanvas(paramI, 4).y);
             ctx.stroke();
 
-            // y-nullcline: -y = 0 => y = 0 (Horizontal line)
-            ctx.strokeStyle = "#f59e0b";
+            ctx.strokeStyle = "#f59e0b"; // y-nullcline
             ctx.beginPath();
-            ctx.moveTo(toCanvas(-5, 0).x, toCanvas(-5, 0).y);
-            ctx.lineTo(toCanvas(5, 0).x, toCanvas(5, 0).y);
+            ctx.moveTo(toCanvas(-6, 0).x, toCanvas(-6, 0).y);
+            ctx.lineTo(toCanvas(6, 0).x, toCanvas(6, 0).y);
             ctx.stroke();
-
-            // Stable FP at (p, 0)
-            const fpC = toCanvas(xVal, 0);
-            ctx.fillStyle = "#fafafa";
-            ctx.beginPath(); ctx.arc(fpC.x, fpC.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-
         } else if (mode === 'resonator') {
-            // x-nullcline: y = 0 (Horizontal)
             ctx.strokeStyle = "#10b981";
             ctx.beginPath();
-            ctx.moveTo(toCanvas(-5, 0).x, toCanvas(-5, 0).y);
-            ctx.lineTo(toCanvas(5, 0).x, toCanvas(5, 0).y);
+            ctx.moveTo(toCanvas(-6, 0).x, toCanvas(-6, 0).y);
+            ctx.lineTo(toCanvas(6, 0).x, toCanvas(6, 0).y);
             ctx.stroke();
 
-            // y-nullcline: -x - dy = 0 => x = -dy
-            const d = Math.max(0, paramI);
             ctx.strokeStyle = "#f59e0b";
             ctx.beginPath();
-            // x = -d*y
-            if (d > 0.01) {
-                // draw line x = -d * y  -> y = -x/d
-                const start = toCanvas(-5, 5 / d);
-                const end = toCanvas(5, -5 / d);
-                ctx.moveTo(start.x, start.y);
-                ctx.lineTo(end.x, end.y);
-            } else {
-                // x = 0 (Vertical)
-                ctx.moveTo(toCanvas(0, -4).x, toCanvas(0, -4).y);
-                ctx.lineTo(toCanvas(0, 4).x, toCanvas(0, 4).y);
-            }
+            const d = Math.max(0.01, paramI);
+            const s = toCanvas(-4, 4 / d);
+            const e = toCanvas(4, -4 / d);
+            ctx.moveTo(s.x, s.y); ctx.lineTo(e.x, e.y);
             ctx.stroke();
-
-            // FP at 0,0
-            const fpC = toCanvas(0, 0);
-            ctx.fillStyle = "#fafafa";
-            ctx.beginPath(); ctx.arc(fpC.x, fpC.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-
         } else {
-            // 'spike' (FHN) & 'math'
-            const vNullcline = (v: number) => v - (v * v * v) / 3 + paramI;
-            const wNullcline = (v: number) => (v + a) / b;
-
+            // FHN Curves
             ctx.strokeStyle = "#10b981";
             ctx.beginPath();
             for (let v = -4; v <= 4; v += 0.05) {
-                const w = vNullcline(v);
-                const pos = toCanvas(v, w);
-                if (v === -4) ctx.moveTo(pos.x, pos.y);
-                else ctx.lineTo(pos.x, pos.y);
+                const w = v - (v * v * v) / 3 + paramI;
+                const p = toCanvas(v, w);
+                v === -4 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
             }
             ctx.stroke();
 
             ctx.strokeStyle = "#f59e0b";
             ctx.beginPath();
-            const startLin = toCanvas(-4, wNullcline(-4));
-            const endLin = toCanvas(4, wNullcline(4));
-            ctx.moveTo(startLin.x, startLin.y);
-            ctx.lineTo(endLin.x, endLin.y);
+            const s = toCanvas(-4, (-4 + a) / b);
+            const e = toCanvas(4, (4 + a) / b);
+            ctx.moveTo(s.x, s.y); ctx.lineTo(e.x, e.y);
             ctx.stroke();
-
-            // FP Solve
-            let v = 0;
-            // Newton's method to find intersection
-            for (let i = 0; i < 10; i++) {
-                const val = (b / 3) * Math.pow(v, 3) + (1 - b) * v + (a - b * paramI);
-                const deriv = b * v * v + (1 - b);
-                v = v - val / deriv;
-            }
-            const w = wNullcline(v);
-            const fp = toCanvas(v, w);
-            ctx.fillStyle = "#fafafa";
-            ctx.beginPath(); ctx.arc(fp.x, fp.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
         }
 
-        // Ghost Trace & Live State Calculation
+        // Trajectory on Mouse Hover
         if (mousePos) {
-            const startState = fromCanvas(mousePos.x, mousePos.y);
+            const start = fromCanvas(mousePos.x, mousePos.y);
+            const { dx, dy } = getDerivatives(start.x, start.y, paramI, mode);
+            setLiveState({ x: start.x, y: start.y, dx, dy });
 
-            // Calculate current Math State for UI
-            const { dx, dy } = getDerivatives(startState.x, startState.y, paramI, mode);
-            setLiveState({ x: startState.x, y: startState.y, dx, dy });
-
-            ctx.strokeStyle = mode === 'spike' ? "#10b981" : mode === 'leak' ? "#a855f7" : mode === 'resonator' ? "#06b6d4" : "#3b82f6";
+            ctx.strokeStyle = mode === 'spike' ? "#10b981" : "#3b82f6";
             ctx.lineWidth = 3;
-            ctx.setLineDash([5, 5]);
+            ctx.setLineDash([6, 4]);
             ctx.beginPath();
-            let currX = startState.x;
-            let currY = startState.y;
+            let cur = { ...start };
             ctx.moveTo(mousePos.x, mousePos.y);
-            const dt = 0.02;
-            const steps = 500;
-
-            for (let i = 0; i < steps; i++) {
-                const { dx, dy } = getDerivatives(currX, currY, paramI, mode);
-                currX += dx * dt;
-                currY += dy * dt;
-                const pos = toCanvas(currX, currY);
-                ctx.lineTo(pos.x, pos.y);
-                if (pos.x < -100 || pos.x > canvas.width + 100 || pos.y < -100 || pos.y > canvas.height + 100) break;
+            
+            for (let i = 0; i < 400; i++) {
+                cur = rk4Step(cur.x, cur.y, paramI, mode, 0.03);
+                const p = toCanvas(cur.x, cur.y);
+                ctx.lineTo(p.x, p.y);
+                if (p.x < 0 || p.x > width || p.y < 0 || p.y > height) break;
             }
             ctx.stroke();
             ctx.setLineDash([]);
-        } else {
-            setLiveState(null);
         }
 
     }, [paramI, mousePos, mode]);
@@ -250,58 +187,39 @@ export default function PhasePlanePage() {
     const handleMouseMove = (e: React.MouseEvent) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-
-        setMousePos({
-            x: (e.clientX - rect.left) * scaleX,
-            y: (e.clientY - rect.top) * scaleY
-        });
+        setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
     };
 
     const getLabels = (m: Mode) => {
         switch (m) {
             case 'math': return {
-                header: "Vector Field Analysis",
-                xAxis: "x",
-                yAxis: "y",
-                param: "Parameter c",
-                desc: "Explore the abstract Phase Plane.",
-                eq: "\\begin{cases} \\dot{x} = x - \\frac{x^3}{3} - y + c \\\\ \\tau \\dot{y} = x + a - by \\end{cases}",
-                color: "blue",
-                live: (s: { x: number, y: number, dx: number, dy: number }) => `\\begin{aligned} \\dot{x} &= ${s.x.toFixed(2)} - ... = \\mathbf{${s.dx.toFixed(2)}} \\\\ \\dot{y} &= ... = \\mathbf{${s.dy.toFixed(2)}} \\end{aligned}`
+                header: "Nonlinear Dynamics",
+                xAxis: "x", yAxis: "y", param: "Control Parameter (c)",
+                desc: "Analyze the topology of a generic cubic system.",
+                eq: "\\dot{x} = x - \\frac{x^3}{3} - y + c",
+                color: "blue"
             };
             case 'leak': return {
-                header: "Linear Leak",
-                xAxis: "Voltage (V)",
-                yAxis: "Aux (y)",
-                param: "Input Current (I)",
-                desc: "A passive membrane acting like a leaky capacitor. The system always relaxes to Rest.",
-                eq: "\\begin{cases} \\dot{V} = -V + I \\\\ \\dot{y} = -y \\end{cases}",
-                color: "purple",
-                live: (s: { x: number, y: number, dx: number, dy: number }) => `\\begin{aligned} \\dot{V} &= -${s.x.toFixed(2)} + ${paramI.toFixed(2)} = \\mathbf{${s.dx.toFixed(2)}} \\\\ \\dot{y} &= -${s.y.toFixed(2)} = \\mathbf{${s.dy.toFixed(2)}} \\end{aligned}`
+                header: "Passive Membrane",
+                xAxis: "Voltage (V)", yAxis: "Aux (y)", param: "Input Current (I)",
+                desc: "A linear system where trajectories always relax to a stable fixed point.",
+                eq: "\\dot{V} = -V + I",
+                color: "purple"
             };
             case 'resonator': return {
-                header: "The Resonator",
-                xAxis: "Voltage (V)",
-                yAxis: "Current (w)",
-                param: "Damping (δ)",
-                desc: "Interaction between two currents creates oscillations. With damping, they settle down.",
-                eq: "\\begin{cases} \\dot{V} = w \\\\ \\dot{w} = -V - \\delta w \\end{cases}",
-                color: "cyan",
-                live: (s: { x: number, y: number, dx: number, dy: number }) => `\\begin{aligned} \\dot{V} &= ${s.y.toFixed(2)} \\\\ \\dot{w} &= -${s.x.toFixed(2)} - \\delta(${s.y.toFixed(2)}) = \\mathbf{${s.dy.toFixed(2)}} \\end{aligned}`
+                header: "Resonator Node",
+                xAxis: "Voltage (V)", yAxis: "Recovery (w)", param: "Damping (δ)",
+                desc: "Linear oscillations created by negative feedback.",
+                eq: "\\dot{V} = w, \\quad \\dot{w} = -V - \\delta w",
+                color: "cyan"
             };
             case 'spike': return {
-                header: "The Spike",
-                xAxis: "Voltage (V)",
-                yAxis: "Recovery (w)",
-                param: "Input Current (I)",
-                desc: "Excitability! Pushing past the threshold triggers a massive excursion (Action Potential).",
-                eq: "\\begin{cases} \\dot{V} = V - \\frac{V^3}{3} - w + I \\\\ \\tau \\dot{w} = V + a - bw \\end{cases}",
-                color: "emerald",
-                live: (s: { x: number, y: number, dx: number, dy: number }) => `\\begin{aligned} \\dot{V} &= V - V^3/3 - w + I = \\mathbf{${s.dx.toFixed(2)}} \\\\ \\dot{w} &= \\tau(V + a - bw) = \\mathbf{${s.dy.toFixed(2)}} \\end{aligned}`
+                header: "FitzHugh-Nagumo",
+                xAxis: "Voltage (V)", yAxis: "Recovery (w)", param: "Applied Current (I)",
+                desc: "The fundamental model for neural excitability and spiking.",
+                eq: "\\dot{V} = V - \\frac{V^3}{3} - w + I",
+                color: "emerald"
             };
         }
     };
@@ -310,182 +228,109 @@ export default function PhasePlanePage() {
     const content = getPhaseContent(mode);
 
     return (
-        <div className="h-screen bg-zinc-950 text-zinc-200 font-mono flex flex-col overflow-hidden">
-            {/* MOBILE GUARD */}
-            <div className="flex md:hidden flex-col items-center justify-center h-full p-8 text-center space-y-6 bg-zinc-950 z-50">
-                <div className="w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800">
-                    <Activity className="w-8 h-8 text-emerald-500 animate-pulse" />
+        <div className="h-screen bg-zinc-950 text-zinc-200 flex flex-col overflow-hidden select-none">
+            <header className="h-14 border-b border-zinc-900 flex items-center justify-between px-6 bg-zinc-950 shrink-0">
+                <div className="flex items-center gap-4">
+                    <Compass className={cn("w-5 h-5", mode === 'spike' ? "text-emerald-500" : "text-blue-500")} />
+                    <h1 className="text-lg font-semibold tracking-tight text-white">
+                        <Link href="/" className="hover:opacity-80 transition-opacity">ISCN</Link>
+                        <span className="mx-3 text-zinc-700">/</span>
+                        <span className="text-zinc-400 font-medium">Phase Plane Analysis</span>
+                    </h1>
                 </div>
-                <div>
-                    <h1 className="text-xl font-bold text-white mb-2">Scientific Workstation</h1>
-                    <p className="text-zinc-500 text-sm leading-relaxed max-w-xs mx-auto">
-                        Please access this simulation on a <span className="text-zinc-300">Desktop</span> or <span className="text-zinc-300">Tablet</span>.
-                    </p>
+
+                <div className="flex items-center gap-4">
+                    <Select value={mode} onValueChange={(v: Mode) => setMode(v)}>
+                        <SelectTrigger className="w-[180px] h-9 bg-zinc-900 border-zinc-800 text-sm text-zinc-200 font-mono focus:ring-0">
+                            <SelectValue placeholder="Select Context" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-zinc-900 border-zinc-800">
+                            <SelectItem value="math">Phase Plane</SelectItem>
+                            <SelectItem value="leak">Linear Leak</SelectItem>
+                            <SelectItem value="resonator">Resonator</SelectItem>
+                            <SelectItem value="spike">The Spike</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <ConceptDialog {...content} />
                 </div>
-            </div>
+            </header>
 
-            {/* DESKTOP CONTENT */}
-            <div className="hidden md:flex flex-col h-full">
-
-                {/* Header */}
-                <header className="h-12 border-b border-zinc-900 flex items-center justify-between px-4 bg-zinc-950/80 backdrop-blur-sm z-10 shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className={cn("w-2 h-2 rounded-full animate-pulse", `bg-${labels.color}-500`)} />
-                        <h1 className="text-lg font-bold tracking-tight text-white">
-                            <Link href="/" className="hover:text-emerald-400 transition-colors">ISCN</Link> <span className="text-zinc-400 font-normal text-base">| Membrane Dynamics</span>
-                        </h1>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <Select value={mode} onValueChange={(v: Mode) => setMode(v)}>
-                            <SelectTrigger className="w-[180px] h-8 bg-zinc-900 border-zinc-800 text-xs text-zinc-200">
-                                <SelectValue placeholder="Select Context" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-zinc-900 border-zinc-800 max-h-[400px]">
-                                <SelectItem value="math" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
-                                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500" /> Phase Plane</span>
-                                </SelectItem>
-                                <SelectItem value="leak" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
-                                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-purple-500" /> Linear Leak</span>
-                                </SelectItem>
-                                <SelectItem value="resonator" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
-                                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-cyan-500" /> Resonator</span>
-                                </SelectItem>
-                                <SelectItem value="spike" className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer">
-                                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500" /> The Spike</span>
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-
-                        <div className="h-4 w-px bg-zinc-800" />
-
-                        <ConceptDialog {...content} />
-                    </div>
-                </header>
-
-                <main className="flex-1 grid grid-cols-12 gap-0 overflow-hidden h-full">
-
-                    {/* LEFT COLUMN: Controls */}
-                    <div className="col-span-4 lg:col-span-3 flex flex-col border-r border-zinc-900 bg-zinc-900/30 relative">
-                        <div className="absolute inset-0 overflow-y-auto scrollbar-hide p-6 space-y-6">
-
-                            {/* Visualizer Status - Replaced with Equation Block */}
-                            <div className="p-4 bg-zinc-900/40 border border-zinc-800 rounded-lg shadow-sm text-center">
-                                <h2 className="text-xs text-zinc-400 uppercase tracking-widest mb-3 font-semibold">System Equations</h2>
-                                <div className="text-sm text-zinc-300">
-                                    <BlockMath>{labels.eq}</BlockMath>
-                                </div>
+            <main className="flex-1 flex overflow-hidden p-8 gap-8">
+                {/* Control Panel */}
+                <aside className="w-80 flex flex-col gap-6 shrink-0">
+                    <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-2xl space-y-8 flex flex-col shadow-sm">
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2">
+                                <FunctionSquare className="w-3.5 h-3.5 text-zinc-600" />
+                                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">System Model</span>
                             </div>
-
-                            {/* Controls */}
-                            <div className="space-y-6">
-                                <div className="space-y-3 p-3 rounded border border-zinc-800/50 bg-zinc-900/30">
-                                    <label className="flex justify-between text-[10px] text-zinc-400 uppercase">
-                                        <span>{labels.param}</span>
-                                        <span className="font-mono text-zinc-200">{paramI.toFixed(2)}</span>
-                                    </label>
-                                    <Slider
-                                        value={[paramI]}
-                                        min={-1.0}
-                                        max={1.5}
-                                        step={0.01}
-                                        onValueChange={(val) => setParamI(val[0])}
-                                        className="[&>.bg-primary]:bg-emerald-500"
-                                    />
-                                    <div className="flex justify-between text-[10px] text-zinc-600 font-mono">
-                                        <span>Low</span>
-                                        <span>Med</span>
-                                        <span>High</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Legend */}
-                            <div className="space-y-3">
-                                <h3 className="text-[10px] uppercase text-zinc-500 tracking-widest">Geometry</h3>
-
-                                <div className="flex items-center gap-3 text-xs">
-                                    <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                                    <span className="text-zinc-300">Nullcline 1 <InlineMath>{"\\dot{x}=0"}</InlineMath></span>
-                                </div>
-                                <div className="flex items-center gap-3 text-xs">
-                                    <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                                    <span className="text-zinc-300">Nullcline 2 <InlineMath>{"\\dot{y}=0"}</InlineMath></span>
-                                </div>
-                                <div className="flex items-center gap-3 text-xs">
-                                    <div className="w-3 h-3 rounded-full bg-zinc-100 border border-zinc-500"></div>
-                                    <span className="text-zinc-300">Fixed Point <InlineMath>{"(\\dot{x}=\\dot{y}=0)"}</InlineMath></span>
-                                </div>
-                                <div className="flex items-center gap-3 text-xs">
-                                    <div className={`w-8 h-0.5 border-t-2 border-dashed border-${labels.color}-500`}></div>
-                                    <span className="text-zinc-300">Trajectory</span>
-                                </div>
-                            </div>
-
-                            <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded text-xs text-zinc-400 leading-relaxed">
-                                {labels.desc}
+                            <div className="bg-black/30 rounded-xl p-4 flex items-center justify-center border border-zinc-800/30 min-h-[100px] text-white">
+                                <BlockMath math={labels.eq} />
                             </div>
                         </div>
-                    </div>
 
-                    {/* RIGHT COLUMN: Visuals */}
-                    <div className="col-span-8 lg:col-span-9 bg-zinc-950 relative overflow-hidden h-full w-full flex flex-col items-center justify-center p-4">
-
-                        {/* Canvas Container - Flex Centered with explicit Aspect Ratio constraints */}
-                        <div
-                            className="relative border border-zinc-800 rounded bg-zinc-925 shadow-2xl"
-                            style={{
-                                aspectRatio: '1000/750',
-                                width: 'auto',
-                                height: 'auto',
-                                maxWidth: '100%',
-                                maxHeight: '100%'
-                            }}
-                        >
-                            <canvas
-                                ref={canvasRef}
-                                width={1000}
-                                height={750}
-                                className="w-full h-full cursor-crosshair block"
-                                onMouseMove={handleMouseMove}
-                                onMouseLeave={() => setMousePos(null)}
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <label className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 font-mono">{labels.param}</label>
+                                <span className={cn("text-base font-bold font-mono", mode === 'spike' ? "text-emerald-400" : "text-blue-400")}>{paramI.toFixed(2)}</span>
+                            </div>
+                            <Slider
+                                value={[paramI]} min={-1.0} max={1.5} step={0.01}
+                                onValueChange={(val) => setParamI(val[0])}
+                                className={cn("py-2", mode === 'spike' ? "[&_[role=slider]]:bg-emerald-500" : "[&_[role=slider]]:bg-blue-500")}
                             />
-
-                            {/* Live Probe Overlay */}
-                            {liveState && (
-                                <div className="absolute top-4 left-4 p-4 bg-black/80 backdrop-blur-md border border-zinc-800 rounded text-zinc-200 shadow-xl pointer-events-none z-20 max-w-sm">
-                                    <h4 className="text-[10px] uppercase text-zinc-500 tracking-widest mb-2 font-semibold flex items-center gap-2">
-                                        <Activity size={12} /> Live Probe
-                                    </h4>
-                                    <div className="text-xs space-y-1 font-mono text-zinc-400 mb-3 border-b border-zinc-800 pb-2">
-                                        <div>x: {liveState.x.toFixed(2)}</div>
-                                        <div>y: {liveState.y.toFixed(2)}</div>
-                                    </div>
-                                    <div className="text-xs">
-                                        <BlockMath>{labels.live(liveState)}</BlockMath>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Axis Labels */}
-                            <div className="absolute bottom-2 right-4 text-xs font-bold text-zinc-500 bg-zinc-900/80 px-2 py-1 rounded backdrop-blur-md border border-zinc-800">
-                                {labels.xAxis} &rarr;
-                            </div>
-                            <div className="absolute top-4 right-1/2 translate-x-1/2 text-xs font-bold text-zinc-500 bg-zinc-900/80 px-2 py-1 rounded backdrop-blur-md border border-zinc-800">
-                                &uarr; {labels.yAxis}
-                            </div>
-
-                            <div className="absolute bottom-4 left-4 text-[10px] uppercase text-zinc-600 bg-zinc-950/50 px-2 py-1 rounded border border-zinc-800 opacity-50">
-                                {labels.header}
-                            </div>
+                            <p className="text-xs text-zinc-500 leading-relaxed italic">{labels.desc}</p>
                         </div>
 
+                        <div className="pt-6 border-t border-zinc-800/50 space-y-3">
+                            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Real-time Probe</span>
+                            <div className="text-sm font-bold font-mono text-white bg-zinc-950 p-4 rounded-xl border border-zinc-800 flex flex-col gap-2">
+                                {liveState ? (
+                                    <>
+                                        <div className="flex justify-between opacity-60 text-[10px]">
+                                            <span>POS: ({liveState.x.toFixed(2)}, {liveState.y.toFixed(2)})</span>
+                                            <span className="animate-pulse text-emerald-500 uppercase">Tracking</span>
+                                        </div>
+                                        <div className="text-center pt-2 border-t border-zinc-800">
+                                            <InlineMath math={`\\vec{v} = [${liveState.dx.toFixed(2)}, ${liveState.dy.toFixed(2)}]`} />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-zinc-600 text-center py-2 italic text-xs">Hover to probe field...</div>
+                                )}
+                            </div>
+                        </div>
                     </div>
+                </aside>
 
-                </main>
-            </div>
+                {/* Simulation Canvas */}
+                <section className="flex-1 min-w-0 bg-zinc-900/30 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col relative shadow-inner">
+                    <div className="flex-1 relative cursor-crosshair">
+                        <canvas
+                            ref={canvasRef}
+                            onMouseMove={handleMouseMove}
+                            onMouseLeave={() => setMousePos(null)}
+                            className="w-full h-full"
+                        />
+                        
+                        {/* Static Overlay Labels */}
+                        <div className="absolute bottom-4 right-6 text-xs font-bold text-zinc-600 font-mono">
+                            {labels.xAxis} axis
+                        </div>
+                        <div className="absolute top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-zinc-600 font-mono">
+                            {labels.yAxis} axis
+                        </div>
+                    </div>
+                    
+                    <div className="p-4 px-10 border-t border-zinc-800/50 flex justify-between items-center bg-zinc-950/50">
+                        <div className="flex items-center gap-3">
+                            <div className={cn("w-2 h-2 rounded-full animate-pulse", mode === 'spike' ? "bg-emerald-500" : "bg-blue-500")} />
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 font-mono">Engine: Phase_Plane_RK4</span>
+                        </div>
+                        <span className="text-[10px] text-zinc-700 uppercase tracking-widest font-mono">Precision: High_Res_DPR</span>
+                    </div>
+                </section>
+            </main>
         </div>
     );
 }
-
-// Add the Mode type definition back since I'm replacing the whole function body
