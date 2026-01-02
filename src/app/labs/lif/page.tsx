@@ -79,7 +79,9 @@ export default function LifLab() {
 
   useEffect(() => {
     requestRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(requestRef.current!);
+    return () => {
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    };
   }, [animate]);
 
   const onSliderChangeStart = () => {
@@ -181,7 +183,7 @@ export default function LifLab() {
               </div>
 
               {/* 2. Membrane Group - Compact Grid */}
-              <div className="space-y-4 pt-6 mt-6 border-t border-zinc-800/50">
+              <div className="space-y-4 pt-6 mt-6 border-t border-zinc-800/50 shrink-0">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                         <Settings2 className="w-3.5 h-3.5 text-zinc-600" />
@@ -231,7 +233,7 @@ export default function LifLab() {
               {/* 3. Stimulus Group - Fixed Layout */}
               <div 
                   className={cn(
-                      "mt-6 pt-6 border-t border-zinc-800/50 space-y-4 transition-colors duration-300 rounded-xl", 
+                      "mt-6 pt-6 border-t border-zinc-800/50 space-y-4 transition-colors duration-300 rounded-xl shrink-0", 
                       hoveredTerm === 'I' ? "bg-amber-950/5 border-amber-500/20 -mx-2 px-2 pb-2" : ""
                   )}
                   onMouseEnter={() => setHoveredTerm('I')} onMouseLeave={() => setHoveredTerm(null)}
@@ -317,7 +319,7 @@ export default function LifLab() {
               </div>
 
               {/* 4. Status Footer */}
-              <div className="mt-auto pt-6 border-t border-zinc-800/50">
+              <div className="mt-auto pt-6 border-t border-zinc-800/50 shrink-0">
                   <div className="flex items-center gap-2 mb-2 text-zinc-600">
                       <Info className="w-3.5 h-3.5" />
                       <span className="text-[10px] font-black uppercase tracking-[0.15em] font-mono">Workstation Status</span>
@@ -328,10 +330,7 @@ export default function LifLab() {
                   )}>
                       <p className={cn("text-[11px] font-medium leading-tight", isSpiking ? "text-emerald-400 font-bold" : "text-zinc-400")}>
                           {isSpiking 
-                            ? ">>> ACTION POTENTIAL GENERATED <<< 
-
-[Image of an action potential waveform]
-" 
+                            ? ">>> ACTION POTENTIAL GENERATED <<< " 
                             : isRunning 
                                 ? "Simulation running. Integrating membrane potential..."
                                 : "Simulation paused. System in standby."}
