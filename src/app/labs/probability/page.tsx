@@ -74,14 +74,18 @@ export default function ProbabilityPage() {
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        // HIGH-DPI SCALING LOGIC
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        ctx.scale(dpr, dpr);
-        const width = rect.width;
-        const height = rect.height;
+        const handleResize = () => {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+            ctx.scale(dpr, dpr);
+        };
+
+        handleResize();
+        window.addEventListener('resize', handleResize);
 
         let animationId: number;
         let lastFrameTime = performance.now() / 1000;
@@ -90,6 +94,10 @@ export default function ProbabilityPage() {
             const now = performance.now() / 1000;
             const dt = now - lastFrameTime;
             lastFrameTime = now;
+
+            const rect = canvas.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
 
             ctx.clearRect(0, 0, width, height);
             ctx.fillStyle = "#09090b"; 
@@ -105,13 +113,14 @@ export default function ProbabilityPage() {
                 }
 
                 const history = coinHistoryRef.current;
-                const bottomY = height - 100; // Increased spacing
-                const maxH = 120;
+                const bottomY = height - 80;
+                const maxH = 140;
 
+                // Coin stream: Edge to edge
                 history.forEach((outcome, i) => {
                     const ageIndex = (history.length - 1) - i;
-                    const x = width - 60 - (ageIndex * 15);
-                    if (x < 40) return;
+                    const x = width - (ageIndex * 15); // Start at absolute right edge
+                    if (x < 0) return;
                     ctx.beginPath();
                     ctx.arc(x, 60, 5, 0, Math.PI * 2);
                     ctx.fillStyle = outcome === 1 ? "#10b981" : "#ef4444";
@@ -120,26 +129,26 @@ export default function ProbabilityPage() {
 
                 const heads = history.filter(c => c === 1).length;
                 const total = history.length || 1;
-                const barW = 80;
+                const barW = 100;
 
                 ctx.fillStyle = "#ef4444";
                 const hTails = ((total - heads) / total) * maxH;
-                ctx.fillRect(width / 4 - barW / 2, bottomY - hTails, barW, hTails);
+                ctx.fillRect(width * 0.25 - barW / 2, bottomY - hTails, barW, hTails);
                 
                 ctx.fillStyle = "#10b981";
                 const hHeads = (heads / total) * maxH;
-                ctx.fillRect(3 * width / 4 - barW / 2, bottomY - hHeads, barW, hHeads);
+                ctx.fillRect(width * 0.75 - barW / 2, bottomY - hHeads, barW, hHeads);
 
                 ctx.fillStyle = "#a1a1aa";
-                ctx.fillText(`P(Closed): ${((total - heads) / total).toFixed(2)}`, width / 4 - 40, bottomY + 25);
-                ctx.fillText(`P(Open): ${(heads / total).toFixed(2)}`, 3 * width / 4 - 40, bottomY + 25);
+                ctx.fillText(`P(0): ${((total - heads) / total).toFixed(2)}`, width * 0.25 - 25, bottomY + 25);
+                ctx.fillText(`P(1): ${(heads / total).toFixed(2)}`, width * 0.75 - 25, bottomY + 25);
 
                 const targetY = bottomY - (rate * maxH);
                 ctx.strokeStyle = "#fbbf24";
                 ctx.lineWidth = 1;
                 ctx.setLineDash([5, 5]);
                 ctx.beginPath();
-                ctx.moveTo(80, targetY); ctx.lineTo(width - 80, targetY);
+                ctx.moveTo(0, targetY); ctx.lineTo(width, targetY);
                 ctx.stroke();
                 ctx.setLineDash([]);
             } else {
@@ -150,30 +159,28 @@ export default function ProbabilityPage() {
                 }
 
                 const spikes = spikeTimesRef.current;
-                const histBottom = height - 80;
-                const histX = 80;
-                const histW = width - 160;
-                const histH = 140;
+                const histBottom = height - 60;
+                const histH = 160;
 
-                // Raster Plot
+                // Raster Plot: Edge to Edge
                 ctx.strokeStyle = "#a855f7"; 
                 ctx.lineWidth = 2.5;
                 ctx.beginPath();
                 spikes.forEach(t => {
-                    const x = width - 60 - ((now - t) * 150);
-                    if (x > histX && x < width - 40) {
+                    const x = width - ((now - t) * (width / 5)); // 5 seconds across full width
+                    if (x >= 0 && x <= width) {
                         ctx.moveTo(x, 40);
-                        ctx.lineTo(x, 75);
+                        ctx.lineTo(x, 90);
                     }
                 });
                 ctx.stroke();
 
-                // Histogram Axis
+                // Histogram Axis: Edge to Edge
                 ctx.strokeStyle = "#27272a";
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                ctx.moveTo(histX, histBottom - histH); ctx.lineTo(histX, histBottom);
-                ctx.lineTo(histX + histW, histBottom);
+                ctx.moveTo(0, histBottom - histH); ctx.lineTo(0, histBottom);
+                ctx.lineTo(width, histBottom);
                 ctx.stroke();
 
                 const isis: number[] = [];
@@ -181,7 +188,7 @@ export default function ProbabilityPage() {
 
                 if (isis.length > 2) {
                     const maxIsi = 0.25;
-                    const binCount = 40;
+                    const binCount = 50;
                     const bins = new Array(binCount).fill(0);
                     isis.forEach(v => {
                         const idx = Math.floor(v / (maxIsi / binCount));
@@ -192,25 +199,23 @@ export default function ProbabilityPage() {
                     ctx.fillStyle = "rgba(168, 85, 247, 0.45)";
                     bins.forEach((b, i) => {
                         const h = (b / maxB) * histH;
-                        ctx.fillRect(histX + (i * (histW / binCount)) + 1, histBottom - h, (histW / binCount) - 2, h);
+                        ctx.fillRect(i * (width / binCount), histBottom - h, (width / binCount) - 1, h);
                     });
 
                     ctx.beginPath();
                     ctx.strokeStyle = "#0ed3cf";
                     ctx.lineWidth = 2.5;
-                    for (let x = 0; x < histW; x++) {
-                        const tVal = (x / histW) * maxIsi;
+                    for (let x = 0; x < width; x++) {
+                        const tVal = (x / width) * maxIsi;
                         const yVal = Math.exp(-realRate * tVal);
-                        if (x === 0) ctx.moveTo(histX + x, histBottom - (yVal * histH));
-                        else ctx.lineTo(histX + x, histBottom - (yVal * histH));
+                        if (x === 0) ctx.moveTo(x, histBottom - (yVal * histH));
+                        else ctx.lineTo(x, histBottom - (yVal * histH));
                     }
                     ctx.stroke();
 
                     ctx.fillStyle = "#52525b";
-                    ctx.fillText("0ms", histX, histBottom + 20);
-                    ctx.fillText("250ms", histX + histW - 35, histBottom + 20);
-                    ctx.fillStyle = "#a1a1aa";
-                    ctx.fillText("INTER-SPIKE INTERVALS", histX + histW/2 - 60, histBottom + 40);
+                    ctx.fillText("0ms", 5, histBottom + 20);
+                    ctx.fillText("250ms", width - 40, histBottom + 20);
                 }
             }
 
@@ -227,7 +232,10 @@ export default function ProbabilityPage() {
             animationId = requestAnimationFrame(render);
         };
         animationId = requestAnimationFrame(render);
-        return () => cancelAnimationFrame(animationId);
+        return () => {
+            cancelAnimationFrame(animationId);
+            window.removeEventListener('resize', handleResize);
+        };
     }, [mode, rate]);
 
     return (
@@ -292,8 +300,16 @@ export default function ProbabilityPage() {
                 </aside>
 
                 <section className="flex-1 min-w-0 bg-zinc-900/30 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col relative shadow-inner">
-                    <div className="flex-1 flex items-center justify-center p-6">
-                        <canvas ref={canvasRef} className="w-full h-full bg-zinc-950 rounded-xl border border-zinc-800/50 shadow-2xl overflow-hidden" />
+                    <div className="flex-1 flex items-center justify-center p-0">
+                        <canvas ref={canvasRef} className="w-full h-full bg-zinc-950 overflow-hidden" />
+                    </div>
+                    
+                    <div className="p-4 px-10 border-t border-zinc-800/50 flex justify-between items-center bg-zinc-950/50">
+                        <div className="flex items-center gap-3">
+                            <div className={cn("w-2 h-2 rounded-full", mode === 'coin' ? "bg-emerald-500" : "bg-purple-500")} />
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 font-mono tracking-tight">System Ready // High Fidelity Output</span>
+                        </div>
+                        <span className="text-[10px] text-zinc-700 uppercase tracking-widest font-mono">Scaled_Retina // {mode === 'coin' ? "Bernoulli" : "Poisson"}</span>
                     </div>
                 </section>
             </main>
