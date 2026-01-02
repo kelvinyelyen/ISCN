@@ -327,7 +327,7 @@ export default function PhasePlanePage() {
                                     onValueChange={(val) => setTau(val[0])}
                                     className="py-2 [&_[role=slider]]:bg-white"
                                 />
-                                <p className="text-[10px] text-zinc-500 italic">Controls the "sluggishness" of the system.</p>
+                                <p className="text-[10px] text-zinc-500 italic">Controls the &quot;sluggishness&quot; of the system.</p>
                             </div>
                         )}
 
