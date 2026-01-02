@@ -1,9 +1,80 @@
 import React from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
 
-type Mode = 'math' | 'leak' | 'resonator' | 'spike';
+// Keep your existing types
+type PhaseMode = 'math' | 'leak' | 'resonator' | 'spike';
+type ProbMode = 'coin' | 'poisson';
 
-export const getPhaseContent = (mode: Mode) => {
+// --- NEW FUNCTION FOR PROBABILITY PAGE ---
+export const getProbabilityContent = (mode: ProbMode) => {
+    switch (mode) {
+        case 'coin':
+            return {
+                title: "Bernoulli Process",
+                subtitle: "Ion Channel Stochasticity",
+                sections: [
+                    {
+                        title: "The Bernoulli Trial",
+                        content: (
+                            <div className="space-y-2 text-sm text-zinc-300">
+                                <p>
+                                    In neuroscience, many processes are binary. An ion channel is either <strong className="text-emerald-400">Open (1)</strong> or <strong className="text-red-400">Closed (0)</strong>.
+                                </p>
+                                <BlockMath math="P(X=k) = p^k (1-p)^{1-k}" />
+                                <p>
+                                    The probability <InlineMath>p</InlineMath> determines the likelihood of finding a channel open at any given snapshot.
+                                </p>
+                            </div>
+                        )
+                    },
+                    {
+                        title: "Statistical Convergence",
+                        content: (
+                            <div className="text-sm text-zinc-300 italic">
+                                <p>
+                                    Observe the bars: as the number of trials increases, the ratio of open states converges to your target <InlineMath>p</InlineMath>.
+                                </p>
+                            </div>
+                        )
+                    }
+                ]
+            };
+        case 'poisson':
+            return {
+                title: "Poisson Process",
+                subtitle: "Neural Firing Patterns",
+                sections: [
+                    {
+                        title: "Event Arrivals",
+                        content: (
+                            <div className="space-y-2 text-sm text-zinc-300">
+                                <p>
+                                    A Poisson process models discrete events (spikes) occurring independently at a constant average rate <InlineMath>\lambda</InlineMath>.
+                                </p>
+                                <BlockMath math="P(X=k) = \frac{\lambda^k e^{-\lambda}}{k!}" />
+                            </div>
+                        )
+                    },
+                    {
+                        title: "ISI Distribution",
+                        content: (
+                            <div className="text-sm text-zinc-300">
+                                <p>
+                                    The time between spikes (Inter-Spike Interval) follows an <strong className="text-purple-400">Exponential Distribution</strong>. 
+                                </p>
+                                <p className="mt-2">
+                                    Notice how the data histogram matches the cyan theoretical decay curve.
+                                </p>
+                            </div>
+                        )
+                    }
+                ]
+            };
+    }
+};
+
+// --- YOUR EXISTING PHASE CONTENT ---
+export const getPhaseContent = (mode: PhaseMode) => {
     switch (mode) {
         case 'leak':
             return {
@@ -15,9 +86,7 @@ export const getPhaseContent = (mode: Mode) => {
                         color: "purple",
                         content: (
                             <div className="space-y-2 text-sm text-zinc-300">
-                                <p>
-                                    The simplest model of a neuron is just a leaky capacitor.
-                                </p>
+                                <p>The simplest model of a neuron is just a leaky capacitor.</p>
                                 <ul className="list-disc list-inside ml-2 space-y-1">
                                     <li><strong className="text-emerald-400">Voltage (<InlineMath>V</InlineMath>):</strong> Uses energy to push ions across the membrane.</li>
                                     <li><strong className="text-amber-400">Leak (<InlineMath>g_L</InlineMath>):</strong> Ions escape through channels, pulling Voltage back to rest (0).</li>
@@ -31,15 +100,12 @@ export const getPhaseContent = (mode: Mode) => {
                         content: (
                             <div className="text-sm text-zinc-300">
                                 <BlockMath>{"\\dot{V} = -V + I_{ext}"}</BlockMath>
-                                <p>
-                                    Without input (<InlineMath>I=0</InlineMath>), the system decays exponentially to zero. This is the &quot;forgetting&quot; mechanism of the brain.
-                                </p>
+                                <p>Without input (<InlineMath>I=0</InlineMath>), the system decays exponentially to zero.</p>
                             </div>
                         )
                     }
                 ]
             };
-
         case 'resonator':
             return {
                 title: "The Resonator",
@@ -50,32 +116,27 @@ export const getPhaseContent = (mode: Mode) => {
                         color: "cyan",
                         content: (
                             <div className="space-y-2 text-sm text-zinc-300">
-                                <p>
-                                    Some neurons don&apos;t just decay; they bounce. This happens when you have two competing currents.
-                                </p>
+                                <p>Some neurons don&apos;t just decay; they bounce.</p>
                                 <ul className="list-disc list-inside ml-2 space-y-1">
                                     <li><strong className="text-blue-400">Restoring Force:</strong> Pushes voltage back to rest.</li>
-                                    <li><strong className="text-amber-400">Slow Negative Feedback:</strong> A delayed current (like <InlineMath>I_h</InlineMath>) that overshoots.</li>
+                                    <li><strong className="text-amber-400">Slow Negative Feedback:</strong> A delayed current that overshoots.</li>
                                 </ul>
                             </div>
                         )
                     },
                     {
-                        title: " damped Oscillations",
+                        title: "Damped Oscillations",
                         color: "amber",
                         content: (
                             <div className="text-sm text-zinc-300">
                                 <BlockMath>{"\\dot{V} = w"}</BlockMath>
                                 <BlockMath>{"\\dot{w} = -V - \\delta w"}</BlockMath>
-                                <p>
-                                    This creates a &quot;preferred frequency&quot; at which the neuron likes to vibrate (Resonance).
-                                </p>
+                                <p>This creates a &quot;preferred frequency&quot; (Resonance).</p>
                             </div>
                         )
                     }
                 ]
             };
-
         case 'spike':
             return {
                 title: "The Spike",
@@ -86,11 +147,10 @@ export const getPhaseContent = (mode: Mode) => {
                         color: "emerald",
                         content: (
                             <div className="space-y-2 text-sm text-zinc-300">
-                                <p>The defining feature of a neuron: <strong>The Action Potential</strong>.</p>
-                                <p>It requires positive feedback to explode away from rest.</p>
+                                <p>The defining feature: <strong>The Action Potential</strong>.</p>
                                 <ul className="list-disc list-inside ml-2 space-y-1">
                                     <li><strong className="text-emerald-400">Fast Na+ (<InlineMath>V</InlineMath>):</strong> Explodes open when voltage rises.</li>
-                                    <li><strong className="text-amber-400">Slow K+ (<InlineMath>w</InlineMath>):</strong> Slowly opens to shut the system down (refractory period).</li>
+                                    <li><strong className="text-amber-400">Slow K+ (<InlineMath>w</InlineMath>):</strong> Shuts the system down.</li>
                                 </ul>
                             </div>
                         )
@@ -100,18 +160,12 @@ export const getPhaseContent = (mode: Mode) => {
                         color: "rose",
                         content: (
                             <div className="text-sm text-zinc-300">
-                                <p>
-                                    If input <InlineMath>I</InlineMath> is high enough, the Fixed Point becomes unstable.
-                                </p>
-                                <p className="mt-2">
-                                    The system enters a <strong>Limit Cycle</strong>—repetitive firing. This is how neurons encode strong signals.
-                                </p>
+                                <p>If input <InlineMath>I</InlineMath> is high enough, the system enters repetitive firing.</p>
                             </div>
                         )
                     }
                 ]
             };
-
         default: // 'math'
             return {
                 title: "The Phase Plane",
@@ -122,12 +176,7 @@ export const getPhaseContent = (mode: Mode) => {
                         color: "blue",
                         content: (
                             <div className="text-sm text-zinc-300">
-                                <p>
-                                    Instead of simulating time (<InlineMath>t</InlineMath>), we look at Geometry.
-                                </p>
-                                <p className="mt-2">
-                                    Every point on this screen is a possible state of the neuron. The arrows tell you where that state will move next.
-                                </p>
+                                <p>Instead of simulating time, we look at Geometry.</p>
                             </div>
                         )
                     },
@@ -138,11 +187,9 @@ export const getPhaseContent = (mode: Mode) => {
                             <div className="space-y-2 text-sm text-zinc-300">
                                 <div className="p-2 border border-emerald-500/30 rounded bg-emerald-500/10">
                                     <strong className="text-emerald-400">Green Line (<InlineMath>{"\\dot{V}=0"}</InlineMath>)</strong>
-                                    <p>Where Voltage stops changing. (The Balance of Currents)</p>
                                 </div>
                                 <div className="p-2 border border-amber-500/30 rounded bg-amber-500/10">
                                     <strong className="text-amber-400">Orange Line (<InlineMath>{"\\dot{w}=0"}</InlineMath>)</strong>
-                                    <p>Where Recovery stops changing. (The Steady State)</p>
                                 </div>
                             </div>
                         )
