@@ -113,13 +113,13 @@ export default function ProbabilityPage() {
                 }
 
                 const history = coinHistoryRef.current;
+                const paddingX = 40;
                 const bottomY = height - 80;
                 const maxH = 140;
 
-                // Coin stream: Edge to edge
                 history.forEach((outcome, i) => {
                     const ageIndex = (history.length - 1) - i;
-                    const x = width - (ageIndex * 15); // Start at absolute right edge
+                    const x = width - (ageIndex * 15); 
                     if (x < 0) return;
                     ctx.beginPath();
                     ctx.arc(x, 60, 5, 0, Math.PI * 2);
@@ -148,7 +148,7 @@ export default function ProbabilityPage() {
                 ctx.lineWidth = 1;
                 ctx.setLineDash([5, 5]);
                 ctx.beginPath();
-                ctx.moveTo(0, targetY); ctx.lineTo(width, targetY);
+                ctx.moveTo(paddingX, targetY); ctx.lineTo(width - paddingX, targetY);
                 ctx.stroke();
                 ctx.setLineDash([]);
             } else {
@@ -159,28 +159,31 @@ export default function ProbabilityPage() {
                 }
 
                 const spikes = spikeTimesRef.current;
-                const histBottom = height - 60;
-                const histH = 160;
+                const paddingX = 60; // Left and Right Padding for Histogram
+                const histBottom = height - 80;
+                const histH = 150;
+                const histW = width - (paddingX * 2);
 
                 // Raster Plot: Edge to Edge
                 ctx.strokeStyle = "#a855f7"; 
                 ctx.lineWidth = 2.5;
                 ctx.beginPath();
                 spikes.forEach(t => {
-                    const x = width - ((now - t) * (width / 5)); // 5 seconds across full width
+                    const x = width - ((now - t) * (width / 5)); 
                     if (x >= 0 && x <= width) {
                         ctx.moveTo(x, 40);
-                        ctx.lineTo(x, 90);
+                        ctx.lineTo(x, 80);
                     }
                 });
                 ctx.stroke();
 
-                // Histogram Axis: Edge to Edge
+                // Histogram Axis with Padding
                 ctx.strokeStyle = "#27272a";
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                ctx.moveTo(0, histBottom - histH); ctx.lineTo(0, histBottom);
-                ctx.lineTo(width, histBottom);
+                ctx.moveTo(paddingX, histBottom - histH); 
+                ctx.lineTo(paddingX, histBottom);
+                ctx.lineTo(paddingX + histW, histBottom);
                 ctx.stroke();
 
                 const isis: number[] = [];
@@ -188,7 +191,7 @@ export default function ProbabilityPage() {
 
                 if (isis.length > 2) {
                     const maxIsi = 0.25;
-                    const binCount = 50;
+                    const binCount = 40;
                     const bins = new Array(binCount).fill(0);
                     isis.forEach(v => {
                         const idx = Math.floor(v / (maxIsi / binCount));
@@ -196,26 +199,39 @@ export default function ProbabilityPage() {
                     });
 
                     const maxB = Math.max(...bins, 1);
-                    ctx.fillStyle = "rgba(168, 85, 247, 0.45)";
+                    ctx.fillStyle = "rgba(168, 85, 247, 0.4)";
                     bins.forEach((b, i) => {
                         const h = (b / maxB) * histH;
-                        ctx.fillRect(i * (width / binCount), histBottom - h, (width / binCount) - 1, h);
+                        const xPos = paddingX + (i * (histW / binCount));
+                        ctx.fillRect(xPos, histBottom - h, (histW / binCount) - 1, h);
                     });
 
                     ctx.beginPath();
                     ctx.strokeStyle = "#0ed3cf";
                     ctx.lineWidth = 2.5;
-                    for (let x = 0; x < width; x++) {
-                        const tVal = (x / width) * maxIsi;
+                    for (let x = 0; x < histW; x++) {
+                        const tVal = (x / histW) * maxIsi;
                         const yVal = Math.exp(-realRate * tVal);
-                        if (x === 0) ctx.moveTo(x, histBottom - (yVal * histH));
-                        else ctx.lineTo(x, histBottom - (yVal * histH));
+                        if (x === 0) ctx.moveTo(paddingX + x, histBottom - (yVal * histH));
+                        else ctx.lineTo(paddingX + x, histBottom - (yVal * histH));
                     }
                     ctx.stroke();
 
+                    // Professional Labeling
                     ctx.fillStyle = "#52525b";
-                    ctx.fillText("0ms", 5, histBottom + 20);
-                    ctx.fillText("250ms", width - 40, histBottom + 20);
+                    ctx.fillText("0ms", paddingX, histBottom + 20);
+                    ctx.fillText("250ms", paddingX + histW - 35, histBottom + 20);
+                    
+                    ctx.save();
+                    ctx.translate(paddingX - 40, histBottom - (histH / 2));
+                    ctx.rotate(-Math.PI / 2);
+                    ctx.textAlign = "center";
+                    ctx.fillText("COUNTS", 0, 0);
+                    ctx.restore();
+
+                    ctx.textAlign = "center";
+                    ctx.fillStyle = "#71717a";
+                    ctx.fillText("INTER-SPIKE INTERVAL (ISI) DISTRIBUTION", paddingX + histW / 2, histBottom + 45);
                 }
             }
 
@@ -307,9 +323,9 @@ export default function ProbabilityPage() {
                     <div className="p-4 px-10 border-t border-zinc-800/50 flex justify-between items-center bg-zinc-950/50">
                         <div className="flex items-center gap-3">
                             <div className={cn("w-2 h-2 rounded-full", mode === 'coin' ? "bg-emerald-500" : "bg-purple-500")} />
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 font-mono tracking-tight">System Ready // High Fidelity Output</span>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-zinc-500 font-mono">Telemetry: Online // Rate: 1.2 kHz </span>
                         </div>
-                        <span className="text-[10px] text-zinc-700 uppercase tracking-widest font-mono">Scaled_Retina // {mode === 'coin' ? "Bernoulli" : "Poisson"}</span>
+                        <span className="text-[10px] text-zinc-700 uppercase tracking-widest font-mono">Engine: {mode === 'coin' ? "STOCH_BERN" : "STOCH_POISS"}</span>
                     </div>
                 </section>
             </main>
