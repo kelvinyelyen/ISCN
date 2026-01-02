@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from 'next/link';
 import { Slider } from "@/components/ui/slider";
-import { Activity, FunctionSquare } from "lucide-react";
+import { Activity, FunctionSquare, Info } from "lucide-react";
 import {
     Select,
     SelectContent,
@@ -37,9 +37,7 @@ export default function LinearAlgebraPage() {
 
     useEffect(() => {
         requestRef.current = requestAnimationFrame(animateMixer);
-        return () => {
-            if (requestRef.current) cancelAnimationFrame(requestRef.current);
-        };
+        return () => { if (requestRef.current) cancelAnimationFrame(requestRef.current); };
     }, [animateMixer]);
 
     const dotProduct = weights.reduce((acc, w, i) => acc + w * inputs[i], 0);
@@ -47,7 +45,6 @@ export default function LinearAlgebraPage() {
 
     return (
         <div className="h-screen bg-zinc-950 text-zinc-200 flex flex-col overflow-hidden select-none font-sans">
-            {/* Header */}
             <header className="h-14 border-b border-zinc-900 flex items-center justify-between px-6 bg-zinc-950 shrink-0">
                 <div className="flex items-center gap-4">
                     <Activity className={cn("w-5 h-5", mode === 'neuron' ? "text-purple-500" : "text-emerald-500")} />
@@ -60,16 +57,12 @@ export default function LinearAlgebraPage() {
 
                 <div className="flex items-center gap-4">
                     <Select value={mode} onValueChange={(v: Mode) => setMode(v)}>
-                        <SelectTrigger className="w-[180px] h-9 bg-zinc-900 border-zinc-800 text-sm text-zinc-200 font-mono focus:ring-0 focus:outline-none">
+                        <SelectTrigger className="w-[180px] h-9 bg-zinc-900 border-zinc-800 text-sm text-zinc-200 font-mono focus:ring-0 outline-none">
                             <SelectValue placeholder="Context" />
                         </SelectTrigger>
                         <SelectContent className="bg-zinc-900 border-zinc-800">
-                            <SelectItem value="math" className="text-white hover:bg-zinc-800 cursor-pointer font-mono">
-                                Math (Dot Product)
-                            </SelectItem>
-                            <SelectItem value="neuron" className="text-white hover:bg-zinc-800 cursor-pointer font-mono">
-                                Neuron (Vector)
-                            </SelectItem>
+                            <SelectItem value="math">Math (Dot Product)</SelectItem>
+                            <SelectItem value="neuron">Neuron (Vector)</SelectItem>
                         </SelectContent>
                     </Select>
                     <ConceptDialog {...content} />
@@ -77,65 +70,43 @@ export default function LinearAlgebraPage() {
             </header>
 
             <main className="flex-1 flex overflow-hidden p-8 gap-8">
-                {/* Left Panel: Control Box - Width increased and scrollbar removed */}
-                <aside className="w-96 flex flex-col gap-6 shrink-0 overflow-hidden">
-                    <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-2xl space-y-8 flex flex-col shadow-sm h-full">
+                {/* Side Panel - Tightened and Non-Scrolling */}
+                <aside className="w-96 flex flex-col shrink-0 overflow-hidden">
+                    <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-2xl flex flex-col h-full shadow-sm">
                         
-                        {/* Formula Display with Integrated Net Result Descriptions */}
-                        <div className="space-y-4">
+                        {/* Formula Section */}
+                        <div className="space-y-4 shrink-0">
                             <div className="flex items-center gap-2">
                                 <FunctionSquare className="w-3.5 h-3.5 text-zinc-600" />
-                                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">
-                                    Model Formula
-                                </span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">Model Formula</span>
                             </div>
                             <div className="bg-black/30 rounded-xl p-4 flex items-center justify-center border border-zinc-800/30 min-h-[80px] text-white">
                                 <BlockMath>
                                     {mode === 'neuron' ? "I_{\\text{sum}} = \\sum_{i} w_i x_i" : "y = \\vec{w} \\cdot \\vec{x}"}
                                 </BlockMath>
                             </div>
-                            <div className="space-y-2">
-                                <p className="text-[11px] text-zinc-500 leading-relaxed italic">
-                                    {mode === 'neuron' 
-                                        ? "Summing synaptic inputs at the soma to determine the total membrane current." 
-                                        : "Calculating the algebraic similarity between two vectors through element-wise multiplication."}
-                                </p>
-                                {/* Dynamic Net Result Description moved here */}
-                                <div className="p-3 rounded-lg bg-zinc-950/50 border border-zinc-800/50">
-                                    <p className={cn(
-                                        "text-[11px] font-medium leading-tight",
-                                        dotProduct < 0 ? "text-rose-400/90" : "text-emerald-400/90"
-                                    )}>
-                                        {mode === 'neuron' 
-                                            ? (dotProduct > 0.5 ? "Status: Threshold reached. The neuron is likely to fire an action potential." : "Status: Sub-threshold. Signal is too weak to trigger a spike.")
-                                            : `Magnitude: ${dotProduct.toFixed(2)}. This represents the scale of the projection on the weight vector.`}
-                                    </p>
-                                </div>
-                            </div>
+                            <p className="text-[11px] text-zinc-500 italic leading-relaxed">
+                                {mode === 'neuron' 
+                                    ? "Summing synaptic inputs at the soma to determine membrane current." 
+                                    : "Calculating similarity between vectors via element-wise multiplication."}
+                            </p>
                         </div>
 
-                        {/* Parameter Sliders */}
-                        <div className="space-y-6 pt-6 border-t border-zinc-800/50 overflow-y-auto custom-scrollbar pr-2">
+                        {/* Sliders Section - Compacted */}
+                        <div className="mt-8 pt-8 border-t border-zinc-800/50 flex-1 space-y-6 overflow-hidden">
                             <div className="space-y-1">
                                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 font-mono">
                                     {mode === 'neuron' ? "Synaptic Weights" : "Vector Components"}
                                 </span>
-                                <p className="text-[11px] text-zinc-500 leading-tight">
-                                    {mode === 'neuron' 
-                                        ? "Adjust synaptic strength: positive for excitation (Glutamate), negative for inhibition (GABA)." 
-                                        : "Modify the weighting vector to change how the system filters incoming signals."}
-                                </p>
                             </div>
 
-                            <div className="space-y-6">
+                            <div className="space-y-5">
                                 {weights.map((w, i) => (
-                                    <div key={i} className="space-y-3">
+                                    <div key={i} className="space-y-2.5">
                                         <div className="flex justify-between items-center font-mono text-zinc-400">
-                                            <span className="text-[11px] font-bold">
-                                                <InlineMath math={`w_${i}`} />
-                                            </span>
+                                            <span className="text-[11px] font-bold"><InlineMath math={`w_${i}`} /></span>
                                             <span className={cn(
-                                                "text-xs font-bold px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800",
+                                                "text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-950 border border-zinc-800",
                                                 w < 0 ? "text-rose-400" : "text-emerald-400"
                                             )}>
                                                 {w.toFixed(2)}
@@ -149,26 +120,44 @@ export default function LinearAlgebraPage() {
                                                 newW[i] = val;
                                                 setWeights(newW);
                                             }}
-                                            className={cn(
-                                                "cursor-pointer",
-                                                w < 0 ? "[&_[role=slider]]:bg-rose-500" : "[&_[role=slider]]:bg-emerald-500"
-                                            )}
+                                            className={cn("cursor-pointer", w < 0 ? "[&_[role=slider]]:bg-rose-500" : "[&_[role=slider]]:bg-emerald-500")}
                                         />
                                     </div>
                                 ))}
                             </div>
                         </div>
+
+                        {/* Status/Active Description Section - Moved to Bottom */}
+                        <div className="mt-auto pt-6 border-t border-zinc-800/50 shrink-0">
+                             <div className="flex items-center gap-2 mb-2 text-zinc-600">
+                                <Info className="w-3.5 h-3.5" />
+                                <span className="text-[10px] font-black uppercase tracking-[0.15em] font-mono">Integration Status</span>
+                            </div>
+                            <div className={cn(
+                                "p-3 rounded-lg border transition-colors duration-300",
+                                dotProduct < 0 ? "bg-rose-500/5 border-rose-500/20" : "bg-emerald-500/5 border-emerald-500/20"
+                            )}>
+                                <p className={cn(
+                                    "text-[11px] font-medium leading-tight",
+                                    dotProduct < 0 ? "text-rose-400" : "text-emerald-400"
+                                )}>
+                                    {mode === 'neuron' 
+                                        ? (dotProduct > 0.5 ? "Threshold reached. The neuron is firing." : "Sub-threshold. Signal is too weak to spike.")
+                                        : `Similarity: ${dotProduct.toFixed(2)}. Projection magnitude on weight vector.`}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </aside>
 
-                {/* Right Panel: Visualization Workstation */}
+                {/* Right Panel Visualization */}
                 <section className="flex-1 min-w-0 bg-zinc-900/30 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col relative shadow-inner">
-                    <div className="flex-1 flex flex-col items-center justify-center p-6 gap-12 overflow-hidden">
+                    <div className="flex-1 flex flex-col items-center justify-center p-6 gap-12">
                         <div className="flex items-end justify-center w-full gap-8 xl:gap-16">
                             <div className="flex gap-8 items-end">
                                 {inputs.map((inVal, i) => (
                                     <div key={i} className="flex flex-col items-center gap-4">
-                                        <div className="w-14 bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden relative h-48 md:h-64 shadow-xl">
+                                        <div className="w-14 bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden relative h-48 shadow-xl">
                                             {[0.25, 0.5, 0.75].map((tick) => (
                                                 <div key={tick} className="absolute w-full h-px bg-zinc-800/50" style={{ bottom: `${tick * 100}%` }} />
                                             ))}
@@ -185,12 +174,12 @@ export default function LinearAlgebraPage() {
                                 ))}
                             </div>
 
-                            <div className="h-48 md:h-64 flex flex-col justify-center">
+                            <div className="h-48 flex flex-col justify-center">
                                 <span className="text-zinc-800 text-4xl font-light">→</span>
                             </div>
 
                             <div className="flex flex-col items-center gap-4">
-                                <div className="w-24 h-48 md:h-64 bg-zinc-900 border-2 border-zinc-800 rounded-xl relative overflow-hidden shadow-2xl">
+                                <div className="w-24 h-48 bg-zinc-900 border-2 border-zinc-800 rounded-xl relative overflow-hidden shadow-2xl">
                                     {[0.25, 0.5, 0.75].map((tick) => (
                                         <div key={tick} className="absolute w-full h-px bg-zinc-800" style={{ bottom: `${tick * 100}%` }} />
                                     ))}
@@ -202,15 +191,15 @@ export default function LinearAlgebraPage() {
                                         style={{ height: `${Math.min(Math.abs(dotProduct) * 33, 100)}%` }}
                                     />
                                 </div>
-                                <span className="text-[10px] font-mono text-zinc-500 font-bold uppercase tracking-widest text-center">
+                                <span className="text-[10px] font-mono text-zinc-500 font-bold uppercase tracking-widest">
                                     {mode === 'neuron' ? <InlineMath math="I_{\text{sum}}" /> : <InlineMath math="y" />}
                                 </span>
                             </div>
                         </div>
 
-                        {/* Readout Formula Bar */}
-                        <div className="w-full max-w-4xl bg-zinc-950/50 border border-zinc-800 rounded-xl p-6 shadow-sm backdrop-blur-md">
-                            <div className="flex flex-wrap items-center justify-center gap-x-3 font-mono text-sm xl:text-lg">
+                        {/* Readout Bar */}
+                        <div className="w-full max-w-4xl bg-zinc-950/50 border border-zinc-800 rounded-xl p-6 backdrop-blur-md">
+                            <div className="flex flex-wrap items-center justify-center gap-x-3 font-mono text-sm xl:text-lg text-white">
                                 <span className="text-zinc-600 italic mr-2"><InlineMath math="y =" /></span>
                                 {weights.map((w, i) => (
                                     <React.Fragment key={i}>
