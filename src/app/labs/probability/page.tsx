@@ -281,7 +281,7 @@ export default function ProbabilityPage() {
                 <header className="h-14 border-b border-zinc-900 flex items-center justify-between px-6 bg-zinc-950 shrink-0">
                     <div className="flex items-center gap-4">
                         <Activity className={cn("w-5 h-5", mode === 'coin' ? "text-emerald-500" : "text-purple-500")} />
-                        <h1 className="text-lg font-semibold tracking-tight text-white">
+                        <h1 className="text-base font-semibold tracking-tight text-white">
                             <Link href="/" className="hover:opacity-80 transition-opacity">ISCN</Link>
                             <span className="mx-3 text-zinc-700">/</span>
                             <span className="text-zinc-400 font-medium">Neural Stochasticity</span>
