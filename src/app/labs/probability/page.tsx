@@ -115,7 +115,7 @@ export default function ProbabilityPage() {
                 const history = coinHistoryRef.current;
                 const paddingX = 40;
                 const bottomY = height - 80;
-                const maxH = 140;
+                const maxH = 160; // Increased bar height
 
                 history.forEach((outcome, i) => {
                     const ageIndex = (history.length - 1) - i;
@@ -159,9 +159,9 @@ export default function ProbabilityPage() {
                 }
 
                 const spikes = spikeTimesRef.current;
-                const paddingX = 60; // Left and Right Padding for Histogram
-                const histBottom = height - 80;
-                const histH = 150;
+                const paddingX = 60; 
+                const histBottom = height - 90;
+                const histH = 180; // Increased histogram height
                 const histW = width - (paddingX * 2);
 
                 // Raster Plot: Edge to Edge
@@ -177,7 +177,7 @@ export default function ProbabilityPage() {
                 });
                 ctx.stroke();
 
-                // Histogram Axis with Padding
+                // Static Histogram Axis
                 ctx.strokeStyle = "#27272a";
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
@@ -217,22 +217,28 @@ export default function ProbabilityPage() {
                     }
                     ctx.stroke();
 
-                    // Professional Labeling
+                    // Locked Labels - No longer dynamic
                     ctx.fillStyle = "#52525b";
+                    ctx.textAlign = "left";
                     ctx.fillText("0ms", paddingX, histBottom + 20);
-                    ctx.fillText("250ms", paddingX + histW - 35, histBottom + 20);
+                    
+                    ctx.textAlign = "right";
+                    ctx.fillText("250ms", paddingX + histW, histBottom + 20);
                     
                     ctx.save();
                     ctx.translate(paddingX - 40, histBottom - (histH / 2));
                     ctx.rotate(-Math.PI / 2);
                     ctx.textAlign = "center";
+                    ctx.fillStyle = "#52525b";
                     ctx.fillText("COUNTS", 0, 0);
                     ctx.restore();
 
                     ctx.textAlign = "center";
                     ctx.fillStyle = "#71717a";
-                    ctx.fillText("INTER-SPIKE INTERVAL (ISI) DISTRIBUTION", paddingX + histW / 2, histBottom + 45);
+                    ctx.fillText("INTER-SPIKE INTERVAL (ISI) DISTRIBUTION", paddingX + (histW / 2), histBottom + 45);
                 }
+                // Reset textAlign for other operations
+                ctx.textAlign = "start";
             }
 
             if (now - lastUiUpdateRef.current > 0.1) {
