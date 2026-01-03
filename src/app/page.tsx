@@ -33,12 +33,6 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="relative flex place-items-center mb-16">
-        <h1 className="text-6xl font-black tracking-tighter text-emerald-400 z-10">
-          ISCN :: CURRICULUM
-        </h1>
-      </div>
-
       {/* Directory-style list */}
       <div className="w-full max-w-5xl text-left">
         <ul className="space-y-6">
