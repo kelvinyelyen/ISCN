@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 const labs = [
   {
     title: "Signal Integration",
-    subtitle: "Linear Algebra & the Geometry of Inputs",
+    subtitle: "Linear Algebra & the Geometry of Inputs", 
     href: "/labs/linear-algebra",
   },
   {
