@@ -22,12 +22,12 @@ export default function Home() {
           href="/labs/linear-algebra"
           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-emerald-500/30 hover:bg-zinc-900/50 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
         >
-          <h2 className={mb-3 text-xl font-bold flex items-center gap-2 text-white}>
+          <h2 className="mb-3 text-xl font-bold flex items-center gap-2 text-white">
             Signal Integration
             <Grid className="h-4 w-4 text-emerald-400" />
           </h2>
 
-          <p className={m-0 max-w-[30ch] text-sm text-zinc-400}>
+          <p className="m-0 max-w-[30ch] text-sm text-zinc-400">
             Linear Algebra & The Geometry of Inputs.
           </p>
 
@@ -41,12 +41,12 @@ export default function Home() {
           href="/labs/diff-eqn"
           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-emerald-500/30 hover:bg-zinc-900/50 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
         >
-          <h2 className={mb-3 text-xl font-bold flex items-center gap-2 text-white}>
+          <h2 className="mb-3 text-xl font-bold flex items-center gap-2 text-white">
             Membrane Dynamics
             <Zap className="h-4 w-4 text-emerald-400" />
           </h2>
 
-          <p className={m-0 max-w-[30ch] text-sm text-zinc-400}>
+          <p className="m-0 max-w-[30ch] text-sm text-zinc-400">
             Differential Equations & Stability Analysis
           </p>
 
@@ -60,12 +60,12 @@ export default function Home() {
           href="/labs/probability"
           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-emerald-500/30 hover:bg-zinc-900/50 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
         >
-          <h2 className={mb-3 text-xl font-bold flex items-center gap-2 text-white}>
+          <h2 className="mb-3 text-xl font-bold flex items-center gap-2 text-white">
             Neural Stochasticity
             <Waves className="h-4 w-4 text-emerald-400" />
           </h2>
 
-          <p className={m-0 max-w-[30ch] text-sm text-zinc-400}>
+          <p className="m-0 max-w-[30ch] text-sm text-zinc-400">
             Probability, Noise & Information Coding
           </p>
 
@@ -79,12 +79,12 @@ export default function Home() {
           href="/labs/lif"
           className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-emerald-500/30 hover:bg-zinc-900/50 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
         >
-          <h2 className={mb-3 text-xl font-bold flex items-center gap-2 text-white}>
+          <h2 className="mb-3 text-xl font-bold flex items-center gap-2 text-white">
             LIF Synthesis
             <Activity className="h-4 w-4 text-emerald-400" />
           </h2>
 
-          <p className={m-0 max-w-[30ch] text-sm text-zinc-400}>
+          <p className="m-0 max-w-[30ch] text-sm text-zinc-400">
             Simulating the First Artificial Neuron
           </p>
 
